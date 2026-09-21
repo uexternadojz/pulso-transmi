@@ -31,8 +31,8 @@ $env:PULSO_API_KEY="ptm_live_..."
 python examples/first_prediction.py
 ```
 
-El ejemplo verifica la identidad, descubre el ciclo, entrena un Random Forest
-con rezagos y variables temporales, y envía el payload con una
+El ejemplo verifica la identidad, combina el histórico con todas las páginas del
+stream, descubre el ciclo, entrena un Random Forest con rezagos y variables temporales, y envía el payload con una
 `Idempotency-Key` nueva.
 
 Salida esperada:

@@ -119,8 +119,8 @@ export PULSO_API_KEY="ptm_live_..."
 python examples/first_prediction.py
 ```
 
-El ejemplo descarga el histórico, entrena un Random Forest con variables
-temporales y rezagos, descubre los targets abiertos y envía la predicción. La
+El ejemplo combina el histórico con el stream incremental, entrena un Random
+Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
 ## API pública `0.6.0`

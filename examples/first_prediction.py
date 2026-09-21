@@ -1,4 +1,4 @@
-"""Entrena un baseline real y envía la primera predicción de práctica.
+"""Entrena un baseline real y envía una predicción al ciclo vigente.
 
 Requiere la variable de entorno PULSO_API_KEY. El script descubre el ciclo y
 sus targets; no tiene nombres de estaciones ni timestamps quemados.
@@ -33,6 +33,26 @@ def api_get(path: str) -> dict:
     )
     response.raise_for_status()
     return response.json()
+
+
+def stream_observations() -> pd.DataFrame:
+    rows: list[dict] = []
+    cursor: str | None = None
+    while True:
+        path = "/v1/stream/observations?limit=5000"
+        if cursor:
+            path += f"&cursor={cursor}"
+        page = api_get(path)
+        rows.extend(page["data"])
+        cursor = page.get("next_cursor")
+        if not cursor:
+            break
+    if not rows:
+        return pd.DataFrame(columns=["station_id", "observed_at", "demand"])
+    frame = pd.DataFrame(rows)
+    frame["station_id"] = frame["station_id"].astype("string")
+    frame["observed_at"] = pd.to_datetime(frame["observed_at"], utc=True)
+    return frame[["station_id", "observed_at", "demand"]]
 
 
 def add_features(frame: pd.DataFrame) -> pd.DataFrame:
@@ -100,6 +120,13 @@ def main() -> None:
     observations_url = f"{BASE_URL}/v1/downloads/observations.csv"
     history = pd.read_csv(observations_url, dtype={"station_id": "string"})
     history["observed_at"] = pd.to_datetime(history["observed_at"], utc=True)
+    incremental = stream_observations()
+    history = (
+        pd.concat([history, incremental], ignore_index=True)
+        .drop_duplicates(["station_id", "observed_at"], keep="last")
+        .sort_values(["station_id", "observed_at"])
+        .reset_index(drop=True)
+    )
 
     training = add_features(history)
     feature_columns = [
@@ -160,7 +187,7 @@ def main() -> None:
         "model": {
             "version": "random-forest-baseline:0.1",
             "trained_at": datetime.now(timezone.utc).isoformat(),
-            "training_data_end": cycle["data_cutoff"],
+            "training_data_end": history["observed_at"].max().isoformat(),
             "git_commit": git_commit(),
         },
         "predictions": predictions,
