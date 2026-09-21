@@ -294,7 +294,7 @@ async def rotate_api_key(
                 (actor_type, actor_id, action, entity_type, entity_id, metadata)
             values (
                 'participant',$1,'api_key.rotated','api_key',$2,
-                jsonb_build_object('revoked_key_prefix',$3)
+                jsonb_build_object('revoked_key_prefix',$3::text)
             )
             """,
             identity.public_id,

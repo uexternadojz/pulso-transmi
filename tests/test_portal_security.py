@@ -210,7 +210,10 @@ def test_rotation_revokes_previous_key_and_returns_a_new_secret_once() -> None:
         if "insert into competition.api_keys" in query
     )
     assert revoke_index < insert_index
-    assert any("api_key.rotated" in query for query in connection.queries)
+    assert any(
+        "jsonb_build_object('revoked_key_prefix',$3::text)" in query
+        for query in connection.queries
+    )
 
 
 def test_rotation_is_rate_limited_before_revoking_the_active_key() -> None:
