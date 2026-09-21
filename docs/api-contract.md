@@ -1,4 +1,4 @@
-# Contrato de API `0.5.0`
+# Contrato de API `0.5.1`
 
 Este documento es el contrato técnico de la plataforma central. Los clientes
 deben descubrir el ciclo vigente en la API y nunca inferirlo a partir de la hora
@@ -68,6 +68,10 @@ targets. Sin ciclo abierto devuelve `404 no_open_cycle`. Esta respuesta es la
   "data_cutoff": "2026-09-16T10:00:00-05:00",
   "opens_at": "2026-09-16T10:00:02-05:00",
   "closes_at": "2026-09-16T10:25:02-05:00",
+  "forecast_start_at": "2026-09-16T10:15:00-05:00",
+  "forecast_end_at": "2026-09-16T11:00:00-05:00",
+  "station_count": 12,
+  "horizons_minutes": [15, 30, 45, 60],
   "expected_predictions": 48,
   "targets": [{
     "station_id":"02300",
@@ -158,14 +162,19 @@ Payload `1.0`:
 
 Reglas de aceptación:
 
-1. el ciclo existe, está abierto y no llegó a `closes_at`;
+1. el ciclo existe, es el ciclo vigente, está abierto y no llegó a `closes_at`;
 2. el participante está activo en ese escenario;
 3. `data_cutoff` es idéntico al del ciclo;
 4. `training_data_end` no supera el corte;
 5. llegan todos los targets y solamente esos targets;
 6. no hay extras, duplicados, `NaN`, infinitos ni negativos;
-7. el body máximo es 64 KB y hay máximo tres intentos por ciclo;
+7. el body máximo es 64 KB y hay máximo tres intentos aceptados por ciclo;
 8. el último intento válido reemplaza al anterior como entrega oficial.
+
+Los guardrails se ejecutan antes de insertar la submission, las predicciones o
+el contador de intento. Por tanto, un rechazo por ciclo, corte, esquema o targets
+no consume uno de los tres intentos. El cliente debe corregir la causa y puede
+volver a intentar dentro de la misma ventana.
 
 Una entrega nueva devuelve `201`. Repetirla con igual `Idempotency-Key` devuelve
 el mismo recibo con `200`, sin duplicarla. Reutilizar la llave con otro contenido
@@ -180,6 +189,15 @@ devuelve `409`.
   "closes_at": "2026-09-16T10:25:02-05:00",
   "predictions_received": 48,
   "expected_predictions": 48,
+  "validated_contract": {
+    "cycle_id": "cyc_p1_20260916T150000Z",
+    "data_cutoff": "2026-09-16T10:00:00-05:00",
+    "forecast_start_at": "2026-09-16T10:15:00-05:00",
+    "forecast_end_at": "2026-09-16T11:00:00-05:00",
+    "station_count": 12,
+    "horizons_minutes": [15, 30, 45, 60],
+    "expected_predictions": 48
+  },
   "is_official": true,
   "payload_hash": "sha256:...",
   "replaced_submission_id": "sub_1a..."
@@ -212,13 +230,15 @@ como cero; la cobertura muestra la confiabilidad operacional.
 | 403 | `participant_inactive` | Sin acceso activo al escenario |
 | 404 | `cycle_not_found` / `no_open_cycle` | Ciclo inválido o sin ventana activa |
 | 409 | `cycle_closed` | La ventana ya cerró |
+| 409 | `stale_cycle` | El payload no corresponde al ciclo vigente |
 | 409 | `idempotency_conflict` | Misma llave, payload diferente |
 | 409 | `attempt_limit_reached` | Ya se consumieron tres intentos |
 | 409 | `api_key_already_issued` | La credencial personal ya fue generada |
 | 409 | `api_key_missing` | Se intentó rotar sin una credencial activa |
 | 413 | `payload_too_large` | Body mayor a 64 KB |
 | 415 | `unsupported_media_type` | No se envió JSON |
-| 422 | `invalid_target_set` | Faltan targets, sobran o están repetidos |
+| 422 | `invalid_target_set` | Faltan targets, sobran, están repetidos o se modificó un timestamp |
+| 503 | `cycle_contract_invalid` | El servidor detectó un ciclo sin targets o con período inconsistente; no recibe la entrega |
 | 429 | `rate_limited` | Más de diez intentos por minuto y API key |
 | 429 | `api_key_rotation_rate_limited` | Se alcanzó el límite horario de emisiones |
 

@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.5.0",
+    version="0.5.1",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )
@@ -403,6 +403,10 @@ async def current_cycle(request: Request) -> dict[str, object]:
         "cycle_id": cycle["public_id"], "state": cycle["state"],
         "origin_at": cycle["origin_at"], "data_cutoff": cycle["data_cutoff"],
         "opens_at": cycle["opens_at"], "closes_at": cycle["closes_at"],
+        "forecast_start_at": cycle["target_start_at"],
+        "forecast_end_at": cycle["target_end_at"],
+        "station_count": len({row["station_id"] for row in targets}),
+        "horizons_minutes": sorted({row["horizon_minutes"] for row in targets}),
         "expected_predictions": len(targets),
         "targets": [dict(row) for row in targets],
     }

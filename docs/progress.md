@@ -1,7 +1,7 @@
 ---
 title: Progreso de Pulso TransMi
 description: Estado verificable, decisiones vigentes, pendientes y criterios de salida del proyecto.
-updated_at: 2026-09-18
+updated_at: 2026-09-21
 ---
 
 # Progreso del proyecto
@@ -12,9 +12,9 @@ una funcionalidad disponible.
 
 ## Resumen del corte
 
-**Fecha:** 18 de septiembre de 2026
+**Fecha:** 21 de septiembre de 2026
 
-**Versión:** `0.5.0`
+**Versión:** `0.5.1`
 
 **Fase:** portal estudiantil y ronda de integración operativos
 
@@ -42,7 +42,7 @@ una funcionalidad disponible.
 | Scheduler | Tick con advisory lock, liberación, ciclos, scoring y snapshots | `app/scheduler.py` |
 | Leaderboard | Ventanas cumulative y rolling 24 h | `score_snapshots` y API |
 | Despliegue | Stack levantado en el VPS; API enlazada únicamente a `127.0.0.1:8010` | verificación operativa del corte |
-| Pruebas | 19 pruebas automatizadas, rotación protegida y entrega pública aceptada 12/12 | `tests/` + verificación del corte |
+| Pruebas | 24 pruebas automatizadas, rotación protegida, guardrail de período y entrega pública aceptada 12/12 | `tests/` + verificación del corte |
 | Gestión | Proyecto creado en la vertical Academy del Supabase operativo | ID `1dde4b7d-7ab4-4df8-8298-34c25d662750` |
 
 ## Implementado parcialmente

@@ -6,9 +6,10 @@ consumen observaciones que aparecen con el tiempo, entrenan y reentrenan modelos
 envían pronósticos y compiten en un leaderboard que cambia cuando el sistema
 introduce nuevos patrones y drift.
 
-> **Portal y API — 18 de septiembre de 2026:** la versión `0.5.0` añade el nuevo
+> **Portal y API — 21 de septiembre de 2026:** la versión `0.5.1` conserva el nuevo
 > dashboard de carrera, historial visual de accuracy y avatares persistidos por
-> cohorte. Conserva el acceso
+> cohorte, y añade un guardrail explícito para que cada entrega corresponda al
+> ciclo, corte y período publicados por el servidor. Conserva el acceso
 > estudiantil, emisión y rotación autoservicio de API keys, tablero de conexión
 > y una ronda de práctica sin activar todavía la generación dinámica. Todo está
 > disponible en `https://pulso-transmi.72-60-245-2.sslip.io`.
@@ -90,7 +91,7 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.5.0`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.5.1`) |
 | Portal web | Carrera, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.5.0`) |
 | Scheduler | Reloj, publicación, apertura, resolución, scoring y snapshots | Implementado; espera escenario |
 | Caddy | TLS y exposición pública del servicio | Operativo |
@@ -124,7 +125,7 @@ El ejemplo descarga el histórico, entrena un Random Forest con variables
 temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.5.0`
+## API pública `0.5.1`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -162,6 +163,54 @@ El endpoint estático `/v1/observations` no cambia. Para el collector de
 competencia se usa `/v1/stream/observations`; así un proceso incremental nunca
 confunde el corte inicial con una liberación nueva. El payload, errores y reglas
 de reintento están en el [contrato de API](docs/api-contract.md).
+
+### Regla de entrega y guardrail del período
+
+El estudiante **no debe calcular ni escribir manualmente** el período que cree
+que corresponde. Antes de cada inferencia consulta:
+
+```http
+GET /v1/forecast-cycles/current
+Authorization: Bearer $PULSO_API_KEY
+```
+
+La respuesta autoritativa indica:
+
+- `cycle_id`: ciclo que acepta la entrega;
+- `data_cutoff`: último instante que el modelo puede usar como entrenamiento;
+- `forecast_start_at` y `forecast_end_at`: período exacto a pronosticar;
+- `station_count` y `horizons_minutes`: estaciones y horizontes del ciclo;
+- `expected_predictions`: número exacto de filas requeridas;
+- `targets`: pares exactos `(station_id, target_at)` que se deben devolver.
+
+En un ciclo oficial normal, el corte es `T` y se solicitan las 12 estaciones en
+`T+15`, `T+30`, `T+45` y `T+60`: **48 predicciones**. El ciclo de práctica puede
+tener otra cantidad; por eso el cliente siempre obedece la respuesta y nunca
+debe fijar `48`, estaciones o timestamps en el código.
+
+```text
+T       datos publicados hasta T; abre el ciclo
+T+25m   cierra la recepción real
+T+30m   se revelan los dos primeros períodos
+T+60m   se completa el período, se califica y abre el siguiente ciclo
+```
+
+`POST /v1/submissions` aplica el guardrail **antes de contar un intento**:
+
+1. la API key determina al estudiante; el body no acepta nombre ni correo;
+2. `cycle_id` debe ser el ciclo vigente y no puede estar cerrado;
+3. `data_cutoff` debe ser idéntico al publicado;
+4. `training_data_end` no puede superar el corte;
+5. deben llegar todos y únicamente los targets publicados, sin duplicados;
+6. los valores deben ser finitos, estar entre `0` y `100000` y el JSON no puede
+   contener campos desconocidos;
+7. solo una entrega que pasa todo lo anterior consume uno de los tres intentos.
+
+Una aceptación devuelve `validated_contract`, que confirma el ciclo, el corte,
+el período, los horizontes y la cantidad de predicciones que realmente validó
+el servidor. Un `422 invalid_target_set` incluye ejemplos de `missing` y `extra`
+y la instrucción de volver a consultar el ciclo vigente. No se debe corregir un
+timestamp “a mano”.
 
 ## Inicio rápido local
 
