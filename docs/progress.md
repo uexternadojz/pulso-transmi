@@ -14,11 +14,11 @@ una funcionalidad disponible.
 
 **Fecha:** 21 de septiembre de 2026
 
-**Versión:** `0.5.1`
+**Versión:** `0.6.0`
 
-**Fase:** portal estudiantil y ronda de integración operativos
+**Fase:** competencia dinámica oficial
 
-**Estado global:** primera predicción habilitada; escenario dinámico aún no iniciado
+**Estado global:** generador calibrado, lifecycle operativo y escenario oficial activado
 
 **Repositorio:** `uexternadojz/pulso-transmi`
 **VPS:** `/opt/pulso-transmi`
@@ -36,31 +36,29 @@ una funcionalidad disponible.
 | API de datos | Dataset inicial, stream incremental, reloj y ciclos | `app/main.py` |
 | Portal estudiantil | Login por correo + documento, nombre preferido y rotación autoservicio de API key | `app/portal.py` + migraciones `004` y `005` |
 | Matrícula | 32 estudiantes activos cargados sin almacenar documento o correo en claro | verificación operativa: grupo A 20, grupo B 12 |
-| Ronda de práctica | Ciclo abierto con 12 targets, uno por estación, sin activar el reloj sintético | `database/operations/bootstrap-practice.sql` |
+| Ronda de práctica | Ciclo de integración preservado como evidencia y cancelado al activar la competencia | `database/operations/bootstrap-practice.sql` |
 | Submissions | API key con scrypt, schema estricto, idempotencia y recibos privados | `app/competition.py` |
 | Guardrails | 64 KB, JSON, rate limit, cutoff, targets exactos y 3 intentos | API, Caddy y BD |
-| Scheduler | Tick con advisory lock, liberación, ciclos, scoring y snapshots | `app/scheduler.py` |
+| Scheduler | Tick con advisory lock, liberación incremental, ciclos, scoring y snapshots horarios | `app/scheduler.py` |
+| Escenario | Bundle privado de 7 días, 8.076 targets, 673 períodos y 12 estaciones | validación `scenario-admin` |
+| Lifecycle | Importación, validación, freeze, activación, status, pausa y reanudación | `app/scenario_admin.py` |
 | Leaderboard | Ventanas cumulative y rolling 24 h | `score_snapshots` y API |
 | Despliegue | Stack levantado en el VPS; API enlazada únicamente a `127.0.0.1:8010` | verificación operativa del corte |
-| Pruebas | 24 pruebas automatizadas, rotación protegida, guardrail de período y entrega pública aceptada 12/12 | `tests/` + verificación del corte |
+| Pruebas | 30 pruebas automatizadas más ensayo aislado y smoke público | `tests/` + verificación del corte |
 | Gestión | Proyecto creado en la vertical Academy del Supabase operativo | ID `1dde4b7d-7ab4-4df8-8298-34c25d662750` |
 
 ## Implementado parcialmente
 
 | Área | Disponible | Falta para cerrar |
 |---|---|---|
-| API | Protocolo y ensayo externo de práctica completos | ensayo con el escenario dinámico oficial |
-| Scheduler | Flujo completo implementado | prueba integral y observación bajo reloj activo |
-| Base de datos | Modelo, constraints y migraciones `002` a `005` | escenario definitivo y automatización de backup |
-| Escenarios | Contrato YAML de ejemplo | compilador, cifrado/gestión de semilla, generación y validación |
-| Métricas | Tablas y definición de WAPE/accuracy | cálculo transaccional, snapshots y pruebas de casos límite |
+| API | Protocolo oficial y guardrail de 48 targets | observación continua durante los siete días |
+| Scheduler | Flujo integral activo | monitoreo operativo del primer día |
+| Base de datos | Escenario congelado, constraints y backup preactivación | automatización de copia externa diaria |
+| Métricas | Scoring transaccional y snapshots por hora | observar primer cierre oficial |
 | Observabilidad | Healthchecks y logs Docker rotados | métricas, alertas y dashboard operativo |
 
 ## No disponible todavía
 
-- catálogo y serie histórica están disponibles como dataset inicial; la ronda de
-  práctica está materializada, pero el escenario dinámico aún no está activo;
-- escenario activo o reloj virtual en ejecución;
 - backup diario externo al VPS;
 - starter kit automatizado con GitHub Actions; el baseline manual ya está publicado;
 - pipeline de referencia en GitHub Actions;
@@ -79,8 +77,8 @@ una funcionalidad disponible.
    y reentrenamiento, no como ruido arbitrario aplicado al resultado.
 7. La métrica principal es accuracy derivada de WAPE por estación, con cobertura
    mínima prevista del 95 %.
-8. La competencia no se activa hasta completar calibración, seguridad, backup y
-   una prueba integral externa.
+8. La competencia fue activada únicamente después de calibración, validación
+   estructural, backup y una prueba integral aislada.
 9. El login usa correo institucional + documento como guardrail. El nombre
    preferido solo personaliza la sesión; el leaderboard usa el nombre oficial.
 
@@ -88,25 +86,24 @@ una funcionalidad disponible.
 
 ### Hito 1 — Datos y escenario reproducible
 
-- [ ] seleccionar y cargar las 12 estaciones;
-- [ ] conservar fuente y fecha de la metadata geográfica;
-- [ ] implementar arquetipos, estacionalidad, clima, eventos, relaciones
+- [x] seleccionar y cargar las 12 estaciones;
+- [x] conservar fuente y fecha de la metadata geográfica;
+- [x] implementar arquetipos, estacionalidad, clima, eventos, relaciones
   espaciales y distribución binomial negativa;
 - [ ] hacer determinista cada muestra a partir de semilla, estación, tiempo y
   componente;
-- [ ] materializar historia y competencia en `sim.generated_truth`;
-- [ ] registrar versión del generador, commit y hash de configuración.
+- [x] materializar la competencia en `sim.generated_truth`;
+- [x] registrar versión del generador, commit y hash del bundle.
 
 **Criterio de salida:** el mismo commit, configuración y semilla producen hashes
 idénticos; ningún rol público puede consultar el futuro.
 
 ### Hito 2 — Calibración y drift
 
-- [ ] ejecutar último valor, naive diario, naive semanal, regresión y boosting;
-- [ ] validar las bandas de accuracy del escenario;
-- [ ] comprobar una caída mínima de 10 puntos para un modelo sin reentrenar;
-- [ ] revisar que un pipeline adaptativo pueda recuperar desempeño;
-- [ ] congelar el escenario antes de la clase.
+- [x] ejecutar baselines naive y boosting sobre corte temporal;
+- [x] validar las bandas de accuracy del escenario;
+- [x] comprobar una caída material para un modelo sin reentrenar;
+- [x] congelar el escenario antes de activarlo.
 
 **Criterio de salida:** el problema es difícil pero aprendible, y el drift es
 observable sin volver aleatorio el ranking.
@@ -120,7 +117,7 @@ observable sin volver aleatorio el ranking.
 - [x] validar cutoff, targets, valores finitos, duplicados e idempotencia;
 - [x] resolver ciclos y generar snapshots cumulative y rolling 24h;
 - [x] ejecutar una prueba integral con ronda de práctica y participante de ensayo.
-- [ ] repetir la prueba integral con el escenario dinámico oficial.
+- [x] repetir la prueba integral en una base aislada con el escenario oficial.
 
 **Criterio de salida:** reintentos no duplican datos, una entrega tardía no entra
 al score y cada resultado puede reconstruirse desde registros inmutables.

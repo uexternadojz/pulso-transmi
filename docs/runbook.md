@@ -152,6 +152,35 @@ el escenario, crear participantes, probar backup y ejecutar un ensayo integral.
 Para pausar sin perder datos, cambiar únicamente el reloj a `paused`; el API
 seguirá sirviendo historia y recibos, pero no avanzará el tiempo virtual.
 
+El bundle oficial es privado y no se guarda en Git. Se monta temporalmente bajo
+`private/`, que está ignorado, y se importa mediante el perfil administrativo:
+
+```bash
+sudo docker compose --profile ops run --rm scenario-admin \
+  python -m app.scenario_admin import-bundle \
+  --bundle /private/official-20260921.bundle.json.gz
+
+sudo docker compose --profile ops run --rm scenario-admin \
+  python -m app.scenario_admin activate \
+  --scenario official-20260921 --cohort VIS2-2026II
+
+sudo docker compose --profile ops run --rm scenario-admin \
+  python -m app.scenario_admin status --scenario official-20260921
+```
+
+La activación inscribe únicamente estudiantes elegibles de la cohorte, cancela
+ciclos abiertos anteriores, libera el punto inicial y abre inmediatamente el
+primer ciclo oficial. No imprime ni modifica API keys.
+
+Pausa y reanudación controladas:
+
+```bash
+sudo docker compose --profile ops run --rm scenario-admin \
+  python -m app.scenario_admin pause --scenario official-20260921
+sudo docker compose --profile ops run --rm scenario-admin \
+  python -m app.scenario_admin resume --scenario official-20260921
+```
+
 ## Actualización
 
 1. Crear backup.

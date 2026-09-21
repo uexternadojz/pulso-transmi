@@ -14,15 +14,18 @@ permiso de lectura sobre el ground truth, las semillas ni la definición del dri
    submissions y leaderboard.
 3. **Portal:** sesión académica, emisión de API key, recibos y estado de la
    cohorte; se sirve desde el mismo proceso para evitar otro servicio en el VPS.
-4. **Scheduler:** avanza el reloj cada 30 minutos, libera dos observaciones de
-   15 minutos por estación, abre ciclos horarios, resuelve targets y toma snapshots.
-5. **Caddy:** TLS, superficie pública y límite de 64 KB para submissions.
+4. **Scenario admin:** importa un bundle privado, verifica su grilla y calibración,
+   lo congela y activa el reloj en una transacción.
+5. **Scheduler:** avanza el reloj cada 30 minutos, libera exclusivamente el tramo
+   virtual nuevo, abre ciclos horarios, resuelve targets y toma snapshots horarios.
+6. **Caddy:** TLS, superficie pública y límite de 64 KB para submissions.
 
 ## Flujo operativo
 
 ```text
 configuración privada
   -> compilador de escenario
+  -> bundle privado validado y congelado
   -> sim.generated_truth
   -> scheduler / reloj virtual
   -> competition.observations
@@ -42,7 +45,8 @@ Cada 60 min virtuales    se abre un ciclo de pronóstico
 Durante 25 min reales    se aceptan hasta 3 intentos por participante
 Horizontes del ciclo     +15, +30, +45 y +60 min × 12 estaciones = 48 valores
 Después del cierre       el último intento válido es el oficial
-Al revelarse el target   se calcula error y se actualiza el leaderboard
+Al revelarse el target   se calcula el componente de error
+Al completar la hora    se publica un snapshot oficial del leaderboard
 ```
 
 La hora de GitHub Actions solo sirve para despertar el pipeline. El pipeline
@@ -102,6 +106,8 @@ y la API key son credenciales distintas para que un script no dependa de cookies
 - El collector usa `upsert` y persiste el cursor al final de su transacción.
 - El envío usa una `Idempotency-Key` estable por run y ciclo.
 - El scheduler usa un advisory lock por escenario y escrituras `ON CONFLICT`.
+- La publicación usa el intervalo `(virtual_anterior, virtual_actual]`; la
+  activación libera solamente el punto puente inicial. Nunca republica la historia.
 - Si API o scheduler reinician, PostgreSQL conserva reloj, ciclo, entrega oficial
   y resultados; no existe estado crítico solo en memoria.
 - El rate limit en memoria protege errores accidentales. Los límites definitivos

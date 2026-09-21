@@ -79,5 +79,23 @@ services:
         max-size: 10m
         max-file: "3"
 
+  scenario-admin:
+    image: pulso-transmi-api:local
+    profiles: ["ops"]
+    command: ["python", "-m", "app.scenario_admin", "status", "--scenario", "official-20260921"]
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./private:/private:ro
+    mem_limit: 256m
+    cpus: 0.25
+    restart: "no"
+    healthcheck:
+      disable: true
+
 volumes:
   postgres_data:

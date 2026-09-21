@@ -32,36 +32,48 @@ async def heartbeat(
 
 
 async def release_observations(
-    connection: asyncpg.Connection, scenario_id: int, virtual_now
+    connection: asyncpg.Connection,
+    scenario_id: int,
+    previous_virtual_now,
+    virtual_now,
+    *,
+    include_start: bool = False,
 ) -> int:
+    lower_operator = ">=" if include_start else ">"
     result = await connection.execute(
-        """
+        f"""
         insert into competition.observations
             (scenario_id, station_id, observed_at, value, released_at)
         select scenario_id, station_id, observed_at, actual_value, now()
         from sim.generated_truth
-        where scenario_id=$1 and observed_at <= $2
+        where scenario_id=$1
+          and observed_at {lower_operator} $2
+          and observed_at <= $3
         on conflict (scenario_id,station_id,observed_at) do nothing
         """,
         scenario_id,
+        previous_virtual_now,
         virtual_now,
     )
     await connection.execute(
-        """
+        f"""
         insert into competition.public_time_context
             (scenario_id, observed_at, rain_observed, rain_forecast,
              temperature_observed, temperature_forecast, is_holiday, released_at)
         select scenario_id, observed_at, rain_actual, rain_forecast,
                temperature_actual, temperature_forecast, is_holiday, now()
         from sim.time_context
-        where scenario_id=$1 and observed_at <= $2
+        where scenario_id=$1
+          and observed_at {lower_operator} $2
+          and observed_at <= $3
         on conflict (scenario_id,observed_at) do nothing
         """,
         scenario_id,
+        previous_virtual_now,
         virtual_now,
     )
     await connection.execute(
-        """
+        f"""
         insert into competition.public_events
             (scenario_id,event_code,event_type,latitude,longitude,
              starts_at,ends_at,size_band,released_at)
@@ -71,10 +83,13 @@ async def release_observations(
                     when intensity < 1.5 then 'medium' else 'large' end,
                now()
         from sim.events
-        where scenario_id=$1 and announced_at <= $2
+        where scenario_id=$1
+          and announced_at {lower_operator} $2
+          and announced_at <= $3
         on conflict (scenario_id,event_code) do nothing
         """,
         scenario_id,
+        previous_virtual_now,
         virtual_now,
     )
     return int(result.rsplit(" ", 1)[-1])
@@ -97,8 +112,12 @@ async def open_cycle(
     scenario_code: str,
     virtual_now,
     submission_window_minutes: int,
+    competition_end=None,
 ) -> str | None:
-    if virtual_now.minute != 0:
+    if virtual_now.minute != 0 or (
+        competition_end is not None
+        and virtual_now + timedelta(minutes=60) > competition_end
+    ):
         return None
     public_id = f"cyc_{scenario_code}_{virtual_now.strftime('%Y%m%dT%H%M%SZ')}"
     cycle = await connection.fetchrow(
@@ -274,7 +293,12 @@ async def tick_scenario(
         scenario["competition_end"],
     )
     await close_expired_cycles(connection, scenario["scenario_id"])
-    released = await release_observations(connection, scenario["scenario_id"], virtual_now)
+    released = await release_observations(
+        connection,
+        scenario["scenario_id"],
+        previous_virtual_now,
+        virtual_now,
+    )
     scored = await score_revealed_targets(
         connection, scenario["scenario_id"], previous_virtual_now, virtual_now
     )
@@ -284,21 +308,23 @@ async def tick_scenario(
         scenario["code"],
         virtual_now,
         submission_window_minutes,
+        scenario["competition_end"],
     )
-    await create_snapshot(
-        connection,
-        scenario["scenario_id"],
-        virtual_now,
-        "cumulative",
-        scenario["competition_start"],
-    )
-    await create_snapshot(
-        connection,
-        scenario["scenario_id"],
-        virtual_now,
-        "rolling_24h",
-        max(scenario["competition_start"], virtual_now - timedelta(hours=24)),
-    )
+    if virtual_now.minute == 0:
+        await create_snapshot(
+            connection,
+            scenario["scenario_id"],
+            virtual_now,
+            "cumulative",
+            scenario["competition_start"],
+        )
+        await create_snapshot(
+            connection,
+            scenario["scenario_id"],
+            virtual_now,
+            "rolling_24h",
+            max(scenario["competition_start"], virtual_now - timedelta(hours=24)),
+        )
     state = "completed" if virtual_now >= scenario["competition_end"] else "running"
     await connection.execute(
         """

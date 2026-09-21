@@ -1,13 +1,13 @@
-# Primera predicción de práctica
+# Primera predicción oficial
 
-Esta ronda confirma el circuito técnico. No genera datos nuevos, no inicia el
-reloj sintético y no cuenta para la clasificación oficial.
+La ronda de práctica terminó. El mismo cliente descubre ahora el ciclo oficial,
+consume observaciones nuevas y envía una predicción que sí entra al scoring.
 
 ## Objetivo
 
 Cada estudiante debe conseguir un recibo `accepted` con todos los targets que
-devuelva `/v1/forecast-cycles/current`. Para la práctica del 18 de septiembre son
-12 valores: una estación y un único periodo futuro.
+devuelva `/v1/forecast-cycles/current`. Un ciclo oficial normal contiene 48
+valores: 12 estaciones por cuatro horizontes de 15, 30, 45 y 60 minutos.
 
 ## Ejecución rápida
 
@@ -41,13 +41,14 @@ Salida esperada:
 Estudiante: Nombre Apellido
 Entrega: sub_...
 Estado: accepted
-Predicciones: 12/12
+Predicciones: 48/48
 ```
 
 ## Errores frecuentes
 
 - `401 invalid_api_key`: la variable no existe, tiene espacios o la llave fue revocada.
-- `404 no_open_cycle`: la ventana de práctica no está abierta.
+- `404 no_open_cycle`: no hay ventana abierta en ese instante; vuelve a consultar
+  en la siguiente ejecución programada.
 - `409 attempt_limit_reached`: ya se usaron los tres intentos del ciclo.
 - `422 invalid_target_set`: faltan objetivos, sobran o se alteró un timestamp.
 

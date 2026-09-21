@@ -33,6 +33,22 @@ El escenario completo se genera antes de iniciar. Cada muestra aleatoria se
 deriva de la semilla privada, estación, timestamp y componente. El resultado no
 depende del tamaño del batch ni del orden de ejecución.
 
+El bundle oficial y la semilla son material privado de evaluación. El repositorio
+público conserva únicamente el contrato del generador y el cargador validado. El
+bundle se identifica por SHA-256, queda congelado antes de activar y no se monta
+en los contenedores públicos de API o scheduler.
+
+## Lifecycle operativo
+
+```text
+generar en entorno privado → validar grilla y dificultad → importar
+→ frozen → backup → activate → running → completed
+```
+
+La activación crea el reloj y el primer ciclo de forma atómica. Los comandos de
+pausa y reanudación cambian el reloj sin alterar observaciones, submissions ni
+resultados ya persistidos.
+
 ## Drift
 
 Los drifts modifican parámetros causales en lugar de multiplicar directamente

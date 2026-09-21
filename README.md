@@ -6,13 +6,11 @@ consumen observaciones que aparecen con el tiempo, entrenan y reentrenan modelos
 envían pronósticos y compiten en un leaderboard que cambia cuando el sistema
 introduce nuevos patrones y drift.
 
-> **Portal y API — 21 de septiembre de 2026:** la versión `0.5.1` conserva el nuevo
-> dashboard de carrera, historial visual de accuracy y avatares persistidos por
-> cohorte, y añade un guardrail explícito para que cada entrega corresponda al
-> ciclo, corte y período publicados por el servidor. Conserva el acceso
-> estudiantil, emisión y rotación autoservicio de API keys, tablero de conexión
-> y una ronda de práctica sin activar todavía la generación dinámica. Todo está
-> disponible en `https://pulso-transmi.72-60-245-2.sslip.io`.
+> **Competencia oficial — 21 de septiembre de 2026:** la versión `0.6.0` activa
+> el escenario dinámico de siete días. Cada 30 minutos aparecen observaciones
+> nuevas y cada hora se abre un ciclo de 48 predicciones con 25 minutos para
+> entregar. El portal, la API key personal, los recibos y el leaderboard están
+> disponibles en `https://pulso-transmi.72-60-245-2.sslip.io`.
 
 El login valida únicamente correo institucional + documento. El nombre ingresado
 es una preferencia privada para el saludo; el leaderboard conserva el nombre
@@ -91,9 +89,9 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.5.1`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.0`) |
 | Portal web | Carrera, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.5.0`) |
-| Scheduler | Reloj, publicación, apertura, resolución, scoring y snapshots | Implementado; espera escenario |
+| Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
 | GitHub Actions | Pipeline gratuito de cada estudiante | Ejemplo inicial publicado; automatización completa siguiente fase |
 | Supabase | Persistencia gratuita de cada solución estudiantil | A cargo de cada estudiante |
@@ -125,7 +123,7 @@ El ejemplo descarga el histórico, entrena un Random Forest con variables
 temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.5.1`
+## API pública `0.6.0`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -267,6 +265,12 @@ Sin escenario activo, el scheduler registra heartbeat y no modifica datos. Con
 un escenario en ejecución, cada tick queda en `ops.job_runs`; el heartbeat
 incluye el último resultado.
 
+En la competencia oficial el primer ciclo se crea durante la activación. No se
+deben construir fechas ni IDs localmente: el pipeline consulta siempre
+`/v1/forecast-cycles/current`. Si responde `404 no_open_cycle`, todavía no abrió
+el siguiente ciclo o el anterior ya cerró; el workflow termina sin error y vuelve
+a intentarlo en su próxima ejecución.
+
 ### 4. Detener sin perder datos
 
 ```bash
@@ -342,15 +346,13 @@ Dockerfile            imagen compartida por API y scheduler
 docker-compose.yml    stack central del VPS
 ```
 
-## Hoja de ruta inmediata
+## Estado operativo
 
-1. cargar y validar el catálogo geográfico de las 12 estaciones;
-2. implementar el generador reproducible y compilar el primer escenario;
-3. calibrar baselines y comprobar que el drift degrada modelos estáticos;
-4. completar la prueba de conexión de los 32 participantes;
-5. cargar y congelar el escenario oficial;
-6. activar backup automático y ensayo de restauración;
-7. publicar el starter kit con workflow de GitHub Actions.
+El escenario oficial fue compilado fuera del repositorio público, validado y
+congelado antes de activarse. El repositorio publica el cargador, los guardrails
+y el lifecycle, pero no el bundle, la semilla, los parámetros privados ni el
+ground truth. El starter kit y el contrato de submissions son la interfaz que
+deben usar los estudiantes.
 
 El detalle, la evidencia y los criterios de salida se mantienen en
 [docs/progress.md](docs/progress.md).

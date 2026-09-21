@@ -1,4 +1,4 @@
-# Contrato de API `0.5.1`
+# Contrato de API `0.6.0`
 
 Este documento es el contrato técnico de la plataforma central. Los clientes
 deben descubrir el ciclo vigente en la API y nunca inferirlo a partir de la hora
