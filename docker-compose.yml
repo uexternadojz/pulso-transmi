@@ -82,6 +82,7 @@ services:
   scenario-admin:
     image: pulso-transmi-api:local
     profiles: ["ops"]
+    user: "0"
     command: ["python", "-m", "app.scenario_admin", "status", "--scenario", "official-20260921"]
     env_file: .env
     environment:
