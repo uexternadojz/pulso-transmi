@@ -1,4 +1,24 @@
-# Guía metodológica para estudiantes
+# Guías para estudiantes
+
+## Guía operativa v2.0
+
+Publicada el 21 de septiembre de 2026 para explicar el ciclo oficial de
+submissions y su automatización:
+
+- [Descargar la guía operativa v2.0](pulso-transmi-guia-operativa-v2.0.pdf)
+- [Consultar la fuente en Markdown](pulso-transmi-guia-operativa-v2.0.md)
+- [Ver lámina del reloj operativo](assets-v2/reloj-submission.png)
+- [Ver lámina del loop de GitHub Actions](assets-v2/github-actions-loop.png)
+- SHA-256: `1dac0ea6cccc640b2595d46ff9a7c2bf3771447539c8fa383c96852c3b884b72`
+- Formato: PDF A4, 11 páginas.
+- Estado: versión académica compartible.
+
+La guía aclara el reloj horario, el batch de 48 predicciones, el workflow de
+GitHub Actions cada 10 minutos, el uso de idempotencia, la separación entre
+inferencia y entrenamiento, los errores esperables, el reentrenamiento y el bono
+de dashboard en Vercel.
+
+## Guía metodológica v1.0
 
 La edición vigente es la **v1.0**, publicada el 16 de septiembre de 2026:
 
@@ -7,7 +27,7 @@ La edición vigente es la **v1.0**, publicada el 16 de septiembre de 2026:
 - Formato: PDF A4, 17 páginas.
 - Estado: versión académica compartible.
 
-## Alcance de la v1.0
+### Alcance de la v1.0
 
 La guía explica el propósito del reto, la arquitectura MLOps, el papel de Supabase,
 GitHub Actions y Vercel, el ciclo de publicación y predicción, la forma de entregar

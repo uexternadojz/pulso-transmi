@@ -359,6 +359,7 @@ El detalle, la evidencia y los criterios de salida se mantienen en
 
 ## Documentación
 
+- [Guía operativa de submissions y GitHub Actions v2.0](docs/guides/pulso-transmi-guia-operativa-v2.0.pdf)
 - [Guía metodológica para estudiantes v1.0](docs/guides/pulso-transmi-guia-metodologica-v1.0.pdf)
 - [Versiones de la guía metodológica](docs/guides/README.md)
 - [Progreso y próximos hitos](docs/progress.md)
