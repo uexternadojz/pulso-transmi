@@ -113,6 +113,9 @@ function renderDashboard(data) {
   currentParticipantId = participant.participant_id || participant.public_id || participant.id;
   const preferredName = participant.preferred_name || participant.display_name;
   setText("#student-meta", `${preferredName} · ${participant.section || "Grupo único"}`);
+  if (participant.section === "DOCENTE") {
+    applyAvatar(document.querySelector("#current-avatar"), 1, participant.display_name);
+  }
 
   const hasKey = Boolean(data.api_key);
   document.querySelector("#key-empty").hidden = hasKey;
