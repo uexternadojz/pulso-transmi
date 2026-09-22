@@ -299,6 +299,7 @@ input::placeholder { color: #78877f; }
 .legend-dot { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--gold); }
 .legend-dot.is-complete { background: var(--forest-700); box-shadow: 0 0 0 0.2rem var(--forest-100); }
 .legend-dot.is-missed { background: transparent; border: 1px solid #8d9b93; }
+.legend-dot.is-pending { border-radius: 2px; background: #d8ddd9; }
 
 .operations-board { padding: 0 1.4rem 1.4rem; }
 .cycle-header,
@@ -316,11 +317,16 @@ input::placeholder { color: #78877f; }
 .operations-list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--border); }
 .operations-runner {
   position: relative;
-  min-height: 5.5rem;
+  min-height: 4.6rem;
   border-bottom: 1px solid var(--border);
   animation: runner-enter 420ms var(--ease) both;
   animation-delay: calc(var(--row-index) * 55ms);
 }
+.operations-runner.is-waiting { background: #f8f8f4; }
+.operations-runner.is-waiting .operations-rank,
+.operations-runner.is-waiting .operations-metric strong { color: #7a877f; }
+.operations-runner.is-waiting .avatar { filter: saturate(0.72); opacity: 0.82; }
+.operations-runner.is-waiting .submission-track::before { background: #e0e4e1; }
 @keyframes runner-enter { from { opacity: 0; transform: translateY(0.55rem); } to { opacity: 1; transform: translateY(0); } }
 .operations-runner.is-current { background: linear-gradient(90deg, rgba(200,169,81,0.17), transparent 54%); }
 .operations-runner.is-current::before { content: "Tú"; position: absolute; left: -0.65rem; top: -0.5rem; padding: 0.12rem 0.32rem; color: var(--forest-950); background: var(--gold); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; }
@@ -375,12 +381,6 @@ input::placeholder { color: #78877f; }
 .operations-metric { min-width: 0; text-align: right; }
 .operations-metric strong { display: block; font-family: var(--font-display); font-size: 2rem; line-height: 0.9; font-variant-numeric: tabular-nums; }
 .operations-metric span { color: var(--muted); font-size: 0.65rem; white-space: nowrap; }
-.waiting-grid { margin-top: 1.2rem; border-top: 1px solid var(--border); }
-.waiting-grid summary { min-height: 3.4rem; display: flex; align-items: center; gap: 0.4rem; cursor: pointer; color: var(--muted); font-size: 0.78rem; }
-.waiting-grid summary::marker { color: var(--forest-700); }
-.waiting-grid ul { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0; margin: 0; padding: 0 0 0.4rem; list-style: none; border-top: 1px solid #e2e6e2; }
-.waiting-grid li { display: flex; align-items: center; gap: 0.6rem; min-width: 0; padding: 0.7rem 0.55rem; border-bottom: 1px solid #e2e6e2; color: var(--muted); font-size: 0.72rem; }
-.waiting-grid li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .race-layout { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; min-height: 35rem; }
 .chart-shell { position: relative; min-width: 0; padding: 1rem; background-image: linear-gradient(rgba(27,94,59,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(27,94,59,0.025) 1px, transparent 1px); background-size: 2rem 2rem; }
 .race-chart { width: 100%; min-height: 32rem; overflow: visible; }
@@ -499,8 +499,6 @@ footer a { color: white; }
   .cycle-header, .operations-runner { grid-template-columns: minmax(13rem, 1fr) minmax(18rem, 1.5fr) 7rem; }
   .operations-board { overflow-x: auto; }
   .cycle-header, .operations-list { min-width: 48rem; }
-  .waiting-grid { min-width: 0; }
-  .waiting-grid ul { grid-template-columns: 1fr 1fr; }
   .warmup-signal { min-height: 5rem; }
   .race-layout { grid-template-columns: 1fr; }
   .race-list { max-height: 22rem; border-left: 0; border-top: 1px solid var(--border); }
@@ -534,7 +532,6 @@ footer a { color: white; }
   .submission-track { grid-column: 1 / -1; grid-row: 2; }
   .operations-metric { grid-column: 2; grid-row: 1; }
   .operations-name strong { max-width: 13rem; }
-  .waiting-grid ul { grid-template-columns: 1fr; }
   .live-scoreboard { min-height: 9rem; }
   .race-chart { min-height: 24rem; }
   .race-stats dd { font-size: 1.65rem; }

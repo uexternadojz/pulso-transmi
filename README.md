@@ -6,7 +6,7 @@ consumen observaciones que aparecen con el tiempo, entrenan y reentrenan modelos
 envían pronósticos y compiten en un leaderboard que cambia cuando el sistema
 introduce nuevos patrones y drift.
 
-> **Competencia oficial — 21 de septiembre de 2026:** la versión `0.6.1` activa
+> **Competencia oficial — 21 de septiembre de 2026:** la versión `0.6.2` activa
 > el escenario dinámico de siete días. Cada 30 minutos aparecen observaciones
 > nuevas y cada hora se abre un ciclo de 48 predicciones con 25 minutos para
 > entregar. El portal, la API key personal, los recibos y el leaderboard están
@@ -89,8 +89,8 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.1`) |
-| Portal web | Sprint operativo, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.6.1`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.2`) |
+| Portal web | Benchmark completo, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.6.2`) |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
 | GitHub Actions | Pipeline gratuito de cada estudiante | Ejemplo inicial publicado; automatización completa siguiente fase |
@@ -123,7 +123,7 @@ El ejemplo combina el histórico con el stream incremental, entrena un Random
 Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.6.1`
+## API pública `0.6.2`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -160,10 +160,11 @@ racha vigente, ciclos totales y hora de la última entrega. Los reintentos no
 otorgan ventaja: cada punto representa el `official_submission_id` de un ciclo.
 
 Cada checkpoint incluye un tooltip con la hora de recepción, la versión del
-modelo y el identificador del ciclo. La lista de estudiantes pendientes se
-mantiene visible sin mezclarla con el ranking de quienes ya enviaron. Cuando el
-score tenga cobertura suficiente, la misma API conserva accuracy y timeline
-para promover el tablero a la carrera de desempeño.
+modelo y el identificador del ciclo. Los 32 estudiantes permanecen visibles en
+una única tabla-race: quienes todavía no envían conservan su lugar en la pista,
+pero no reciben posición hasta registrar un ciclo oficial. Cuando el score tenga
+cobertura suficiente, la misma API conserva accuracy y timeline para promover
+el tablero a la carrera de desempeño.
 
 Respuesta esperada de salud:
 

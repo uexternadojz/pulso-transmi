@@ -56,7 +56,8 @@ cursor aparecen la hora, el modelo y el identificador del ciclo.
 El orden usa, en este orden: entregas en la ventana, racha vigente, ciclos
 oficiales totales y hora de la última entrega. Enviar varias veces al mismo ciclo
 no suma puntos: únicamente cuenta la submission oficial registrada por el
-servidor. Quienes todavía no han enviado aparecen en una lista separada.
+servidor. Los 32 estudiantes aparecen al tiempo; quienes todavía no han enviado
+se muestran como **Por iniciar** y aún no reciben una posición competitiva.
 
 Esta vista no reemplaza la evaluación del modelo ni presenta una accuracy
 provisional como resultado definitivo. Cuando la cohorte tenga cobertura

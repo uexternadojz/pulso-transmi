@@ -207,6 +207,7 @@ function renderBoard(board) {
 }
 
 function operationalStatus(row, windowSize) {
+  if (!row.has_started) return row.api_key_active ? "Listo para competir" : "Por iniciar";
   if (row.accepted_cycles_window >= Math.max(1, windowSize - 1)) return "Ritmo estable";
   if (row.accepted_cycles_window >= 2) return "Automatización activa";
   return "Primer envío";
@@ -215,23 +216,19 @@ function operationalStatus(row, windowSize) {
 function renderOperationsBoard(board) {
   const operations = board.operations || {};
   const cycles = operations.cycles || [];
-  const activeRows = board.data.filter((row) => row.has_started);
-  const waitingRows = board.data.filter((row) => !row.has_started);
   const cycleHeader = document.querySelector("#cycle-header");
   const list = document.querySelector("#operations-list");
-  const waitingList = document.querySelector("#waiting-list");
-  const activeCount = operations.active_participants ?? activeRows.length;
+  const activeCount = operations.active_participants ?? board.data.filter((row) => row.has_started).length;
 
-  setText("#race-mode-label", DEMO_MODE ? "Sprint de conexión · vista previa" : "Sprint de conexión");
+  setText("#race-mode-label", DEMO_MODE ? "Benchmark de la cohorte · vista previa" : "Benchmark de la cohorte");
   setText("#phase-status-label", DEMO_MODE ? "Vista de propuesta" : "Competencia activa");
   setText("#active-runner-count", activeCount);
   setText("#active-ratio", `${activeCount}/${board.count}`);
   setText("#race-period", `Últimos ${cycles.length || operations.window_size || 6}`);
-  setText("#waiting-count", waitingRows.length);
-  setText("#home-title", `${activeCount} modelos ya están en pista.`);
+  setText("#home-title", `${activeCount} de ${board.count} modelos están compitiendo.`);
   setText(
     "#phase-copy",
-    "Este primer tablero mide continuidad operacional. Completa ciclos, protege tu racha y demuestra que el pipeline puede correr solo.",
+    "Los 32 modelos comparten la misma pista. Cada ciclo oficial suma continuidad y hace visible quién ya opera un pipeline reproducible.",
   );
   document.querySelector("#cohort-progress-fill").style.width = `${board.count ? (activeCount / board.count) * 100 : 0}%`;
 
@@ -252,9 +249,10 @@ function renderOperationsBoard(board) {
   cycleHeader.append(headerSpacer, headerTrack, scoreLabel);
 
   list.replaceChildren();
-  activeRows.forEach((row, index) => {
+  board.data.forEach((row, index) => {
     const item = document.createElement("li");
     item.className = "operations-runner";
+    if (!row.has_started) item.classList.add("is-waiting");
     item.dataset.runnerId = row.participant_id || row.public_id;
     item.style.setProperty("--row-index", index);
     if ((row.participant_id || row.public_id) === currentParticipantId) item.classList.add("is-current");
@@ -263,7 +261,7 @@ function renderOperationsBoard(board) {
     identity.className = "operations-identity";
     const rank = document.createElement("span");
     rank.className = "operations-rank";
-    rank.textContent = String(row.operations_rank || index + 1).padStart(2, "0");
+    rank.textContent = row.operations_rank ? String(row.operations_rank).padStart(2, "0") : "—";
     const names = document.createElement("span");
     names.className = "operations-name";
     const name = document.createElement("strong");
@@ -294,22 +292,14 @@ function renderOperationsBoard(board) {
     const metric = document.createElement("div");
     metric.className = "operations-metric";
     const score = document.createElement("strong");
-    score.textContent = `${row.accepted_cycles_window}/${cycles.length || operations.window_size || 6}`;
+    score.textContent = `${row.accepted_cycles_window || 0}/${cycles.length || operations.window_size || 6}`;
     const detail = document.createElement("span");
-    detail.textContent = `Racha ${row.current_streak} · ${row.accepted_cycles_total} total`;
+    detail.textContent = row.has_started
+      ? `Racha ${row.current_streak} · ${row.accepted_cycles_total} total`
+      : (row.api_key_active ? "API activa · esperando envío" : "API pendiente");
     metric.append(score, detail);
     item.append(identity, track, metric);
     list.append(item);
-  });
-
-  waitingList.replaceChildren();
-  waitingRows.forEach((row, index) => {
-    const item = document.createElement("li");
-    item.append(avatarNode(row.avatar_index ?? index, row.display_name, "avatar-small"));
-    const name = document.createElement("span");
-    name.textContent = row.display_name;
-    item.append(name);
-    waitingList.append(item);
   });
 
   document.querySelector("#operations-view").hidden = false;

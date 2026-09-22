@@ -6,8 +6,8 @@
     <meta name="description" content="Portal académico del reto MLOps Pulso TransMi.">
     <title>Pulso TransMi · Portal MLOps</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/styles.css?v=0.6.1">
-    <script src="/assets/app.js?v=0.6.1" defer></script>
+    <link rel="stylesheet" href="/assets/styles.css?v=0.6.2">
+    <script src="/assets/app.js?v=0.6.2" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -52,7 +52,7 @@
             <input id="email" name="email" type="email" autocomplete="email" required maxlength="254" placeholder="nombre@est.uexternado.edu.co">
 
             <label for="student-code">Número de documento</label>
-            <input id="student-code" name="student_code" inputmode="numeric" autocomplete="off" required minlength="5" maxlength="32" placeholder="Sin puntos ni espacios">
+            <input id="student-code" name="student_code" inputmode="text" autocomplete="off" required minlength="5" maxlength="32" placeholder="Sin puntos ni espacios">
 
             <p id="login-error" class="message error" role="alert" hidden></p>
             <button class="button primary" type="submit">Entrar al portal</button>
@@ -105,9 +105,9 @@
           <section class="portal-module is-active" data-module="home" aria-labelledby="home-title" tabindex="-1">
             <div class="phase-hero operations-hero">
               <div>
-                <span id="race-mode-label" class="phase-chip">Sprint de conexión</span>
-                <h2 id="home-title"><span id="active-runner-count">—</span> modelos ya están en pista.</h2>
-                <p id="phase-copy">Este primer tablero mide continuidad operacional. Completa ciclos, protege tu racha y demuestra que el pipeline puede correr solo.</p>
+                <span id="race-mode-label" class="phase-chip">Benchmark de la cohorte</span>
+                <h2 id="home-title"><span id="active-runner-count">—</span> de 32 modelos están compitiendo.</h2>
+                <p id="phase-copy">Los 32 modelos comparten la misma pista. Cada ciclo oficial suma continuidad y hace visible quién ya opera un pipeline reproducible.</p>
               </div>
               <div class="live-scoreboard" aria-label="Estado de conexión de la cohorte">
                 <span class="live-scoreboard-label"><i aria-hidden="true"></i> En vivo</span>
@@ -127,21 +127,18 @@
             <section class="race-panel" aria-labelledby="race-title">
               <div class="race-heading">
                 <div>
-                  <h3 id="race-title">Sprint de submissions</h3>
-                  <p>Cada estación representa un ciclo cerrado. Pasa el cursor o enfoca un punto para ver el recibo.</p>
+                  <h3 id="race-title">Benchmark operativo de modelos</h3>
+                  <p>Una fila por estudiante, seis ciclos comparables. Pasa el cursor o enfoca un punto para ver el recibo.</p>
                 </div>
                 <div class="race-legend" aria-label="Leyenda">
                   <span><i class="legend-dot is-complete" aria-hidden="true"></i>Entregado</span>
                   <span><i class="legend-dot is-missed" aria-hidden="true"></i>Sin envío</span>
+                  <span><i class="legend-dot is-pending" aria-hidden="true"></i>Por iniciar</span>
                 </div>
               </div>
               <div id="operations-view" class="operations-board">
                 <div id="cycle-header" class="cycle-header" aria-hidden="true"></div>
-                <ol id="operations-list" class="operations-list" aria-label="Clasificación por continuidad operacional"></ol>
-                <details class="waiting-grid">
-                  <summary><strong id="waiting-count">—</strong> estudiantes todavía están preparando su pipeline</summary>
-                  <ul id="waiting-list"></ul>
-                </details>
+                <ol id="operations-list" class="operations-list" aria-label="Benchmark completo de los 32 estudiantes"></ol>
               </div>
               <div id="accuracy-view" class="race-layout" hidden>
                 <div class="chart-shell">
