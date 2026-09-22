@@ -16,6 +16,11 @@ El login valida únicamente correo institucional + documento. El nombre ingresad
 es una preferencia privada para el saludo; el leaderboard conserva el nombre
 oficial de matrícula.
 
+> **Actualización del portal — 22 de septiembre de 2026:** el Home incorpora
+> la **carrera de accuracy**, con histórico acumulado y ventana móvil de seis
+> ciclos evaluados, encima del tablero de entregas. No cambia el procedimiento
+> para enviar predicciones ni requiere generar otra API key.
+
 La matrícula activa ya está precargada: 32 estudiantes (20 del grupo A y 12 del
 grupo B). Cada persona debe activar su propia API key y realizar una entrega
 individual; el repositorio no contiene correos ni documentos del curso.
@@ -89,8 +94,8 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.2`) |
-| Portal web | Benchmark completo, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.6.2`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.7.0`) |
+| Portal web | Carrera de accuracy, benchmark completo, API key, rotación y recibos | Sesión estudiantil |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
 | GitHub Actions | Pipeline gratuito de cada estudiante | Ejemplo inicial publicado; automatización completa siguiente fase |
@@ -123,7 +128,7 @@ El ejemplo combina el histórico con el stream incremental, entrena un Random
 Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.6.2`
+## API pública `0.7.0`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -150,26 +155,73 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `POST` | `/v1/portal/api-key/rotate` | Revoca y reemplaza la credencial activa | Sí + sesión |
 | `GET` | `/v1/portal/dashboard` | Identidad, ronda y entregas propias | Sí + sesión |
 | `GET` | `/v1/portal/leaderboard` | Conexión o ranking de la cohorte | Sí + sesión |
+| `GET` | `/v1/portal/accuracy-chart` | Histórico de accuracy acumulada y móvil de seis ciclos por etapa | Sí + sesión |
 
-### Tablero operativo de arranque
+### Cómo leer el Home: desempeño y continuidad
 
-Desde `0.7.0` el Home añade una carrera de accuracy encima del tablero operativo,
-con vistas acumulada y móvil de seis ciclos resueltos, selector de escenarios
-evaluados y leyenda interactiva de toda la cohorte. Consulta las reglas de
-agregación y etapas en [Portal del estudiante](docs/portal-estudiante.md).
+El Home muestra dos vistas complementarias. **La carrera de accuracy** compara
+el desempeño predictivo a lo largo del tiempo; el **Sprint de submissions**, que
+se conserva debajo, muestra quién está enviando de forma consistente. Estar
+primero en entregas no significa necesariamente tener el modelo más preciso.
 
-Mientras la cohorte alcanza una cadencia estable, el inicio del portal prioriza
-la evidencia operativa sobre el score compuesto. El **Sprint de submissions**
-ordena a quienes ya empezaron por entregas oficiales en los últimos seis ciclos,
+#### Carrera de accuracy
+
+| Control o elemento | Cómo interpretarlo |
+|---|---|
+| **Acumulada** | Recalcula el desempeño desde el inicio de la etapa hasta cada punto; conserva el efecto de los ciclos anteriores. |
+| **Últimos 6 ciclos** | Cada punto usa los seis ciclos resueltos más recientes hasta ese momento, o los disponibles al inicio. No son las últimas seis entregas personales. |
+| **Etapa** | Selecciona un escenario con resultados evaluados. No borra datos ni reinicia el score; los futuros cortes dentro de un escenario aún están por definir. |
+| **Ejes** | Horizontal: cierre de los ciclos, en hora de Bogotá. Vertical: accuracy de 0 a 100 %, donde más alto es mejor. |
+| **Avatares y leyenda** | Incluyen a los 32 estudiantes. Pulsa un avatar para resaltar su trayectoria; pulsa de nuevo para volver a compararlas todas. |
+| **Puntos y detalle** | Al pasar el cursor o enfocar un punto puedes consultar accuracy, cobertura, ciclos entregados, fecha, ciclo y versiones de modelo. |
+
+Aquí **accuracy no significa porcentaje de aciertos de clasificación**: estamos
+pronosticando cantidades. Se suman los errores absolutos y la demanda real de la
+ventana por estación, se calcula `100 × max(0, 1 − WAPE)` para cada estación y
+se promedian sus resultados. No se promedian directamente los porcentajes de
+los ciclos; el denominador de demanda se protege con un mínimo de 1.
+
+- **Una ausencia cuenta como predicción cero**, por lo que la continuidad también
+  afecta el score. Revisa siempre la cobertura: es la proporción de targets
+  entregados frente a los esperados en esa ventana.
+- **Sin resultado** significa que todavía no hay entregas evaluadas para esa
+  vista. El portal no inventa una trayectoria. Si antes hubo resultados pero ya
+  no hay envíos dentro de la ventana móvil actual, indica **Sin envíos en ventana**
+  y conserva la curva histórica.
+- **Recibido no significa evaluado**: tu submission puede aparecer en el tablero
+  de entregas antes de tener accuracy. El gráfico solo incorpora ciclos resueltos,
+  cuando ya se reveló la demanda real necesaria para evaluarlos.
+- Una caída puede deberse a ausencias, errores del pipeline o peor predicción;
+  **por sí sola no demuestra drift**. Contrasta cobertura, recibos y datos antes
+  de decidir reentrenar.
+
+Por ejemplo, si entregaste solo dos de los últimos seis ciclos, la ventana móvil
+no mide únicamente esos dos: también contempla las ausencias de los otros cuatro.
+Por eso conviene automatizar los envíos y luego mejorar el modelo.
+
+#### Sprint de submissions
+
+Este tablero operativo ordena a quienes ya empezaron por entregas oficiales en los últimos seis ciclos,
 racha vigente, ciclos totales y hora de la última entrega. Los reintentos no
 otorgan ventaja: cada punto representa el `official_submission_id` de un ciclo.
 
 Cada checkpoint incluye un tooltip con la hora de recepción, la versión del
 modelo y el identificador del ciclo. Los 32 estudiantes permanecen visibles en
 una única tabla-race: quienes todavía no envían conservan su lugar en la pista,
-pero no reciben posición hasta registrar un ciclo oficial. Cuando el score tenga
-cobertura suficiente, la misma API conserva accuracy y timeline para promover
-el tablero a la carrera de desempeño.
+pero no reciben posición hasta registrar un ciclo oficial. Su ventana usa ciclos
+cerrados, mientras que la carrera de accuracy necesita ciclos completamente
+resueltos: las dos vistas pueden actualizarse en momentos distintos.
+
+**Rutina recomendada:** confirma tu recibo en **Conexión**, revisa continuidad en
+el Sprint y, cuando el ciclo esté evaluado, compara tu accuracy reciente con la
+acumulada. Usa **Actualizar datos** para consultar el estado más reciente.
+No cambies el período de tus envíos basándote en el gráfico: los targets válidos
+siempre los entrega `/v1/forecast-cycles/current`.
+
+El endpoint del gráfico utiliza la sesión del portal, no la API key de GitHub
+Actions. No reemplaza `/v1/leaderboard`, cuya ventana rolling de 24 horas es
+distinta de la ventana de seis ciclos del gráfico. Más detalles en
+[Portal del estudiante](docs/portal-estudiante.md).
 
 Respuesta esperada de salud:
 
