@@ -47,9 +47,21 @@ cantidad de emisiones por hora y registra el cambio sin guardar secretos legible
 
 ## Tablero
 
-Durante la prueba inicial, el tablero muestra activación y entregas aceptadas;
-no inventa una métrica cuando todavía no hay verdad revelada. Cuando comience la
-competencia cambia a modo de scoring y presenta accuracy, cobertura y posición.
+El inicio muestra primero el **Sprint de submissions**, un ranking operativo que
+permite verificar quién ya conectó su pipeline y está entregando de forma
+consistente. La ventana contiene los seis ciclos cerrados más recientes. Cada
+punto marcado equivale a una entrega oficial aceptada; al enfocarlo o pasar el
+cursor aparecen la hora, el modelo y el identificador del ciclo.
+
+El orden usa, en este orden: entregas en la ventana, racha vigente, ciclos
+oficiales totales y hora de la última entrega. Enviar varias veces al mismo ciclo
+no suma puntos: únicamente cuenta la submission oficial registrada por el
+servidor. Quienes todavía no han enviado aparecen en una lista separada.
+
+Esta vista no reemplaza la evaluación del modelo ni presenta una accuracy
+provisional como resultado definitivo. Cuando la cohorte tenga cobertura
+suficiente, el portal puede promover la carrera de desempeño con accuracy,
+cobertura y posición calculadas sobre ground truth revelado.
 
 La cohorte puede ver nombres y estado académico del reto, pero nunca correos,
 documentos, llaves, payloads o predicciones individuales.

@@ -6,8 +6,8 @@
     <meta name="description" content="Portal académico del reto MLOps Pulso TransMi.">
     <title>Pulso TransMi · Portal MLOps</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/styles.css?v=0.5.0-r1">
-    <script src="/assets/app.js?v=0.5.0-r1" defer></script>
+    <link rel="stylesheet" href="/assets/styles.css?v=0.6.1">
+    <script src="/assets/app.js?v=0.6.1" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -32,11 +32,11 @@
         <div class="intro-panel">
           <p class="eyebrow dark">Proyecto 1 · 2026-II</p>
           <h1 id="login-title">Conecta tu primer modelo.</h1>
-          <p class="lead">Activa tu credencial personal, envía la predicción de prueba y confirma que tu pipeline llega completo al servidor.</p>
+          <p class="lead">Activa tu credencial personal, automatiza el pipeline y entra al sprint de submissions de la cohorte.</p>
           <ol class="steps">
             <li><span>01</span> Identifícate con la matrícula oficial.</li>
             <li><span>02</span> Genera y guarda tu API key.</li>
-            <li><span>03</span> Entrena, predice y envía 12 resultados.</li>
+            <li><span>03</span> Entrena, predice y envía los 48 targets del ciclo.</li>
           </ol>
         </div>
 
@@ -84,7 +84,7 @@
           </nav>
           <div class="rail-status">
             <span class="live-dot" aria-hidden="true"></span>
-            <span>Warmup activo</span>
+            <span id="phase-status-label">Competencia activa</span>
           </div>
         </aside>
 
@@ -103,36 +103,47 @@
           <div id="global-message" class="message" role="status" aria-live="polite" hidden></div>
 
           <section class="portal-module is-active" data-module="home" aria-labelledby="home-title" tabindex="-1">
-            <div class="phase-hero">
+            <div class="phase-hero operations-hero">
               <div>
-                <span id="race-mode-label" class="phase-chip">Warmup</span>
-                <h2 id="home-title">Todos están en la línea de salida.</h2>
-                <p id="phase-copy">Conecta tu pipeline ahora. La carrera de accuracy aparecerá cuando se revele el primer resultado real.</p>
+                <span id="race-mode-label" class="phase-chip">Sprint de conexión</span>
+                <h2 id="home-title"><span id="active-runner-count">—</span> modelos ya están en pista.</h2>
+                <p id="phase-copy">Este primer tablero mide continuidad operacional. Completa ciclos, protege tu racha y demuestra que el pipeline puede correr solo.</p>
               </div>
-              <div class="warmup-signal" aria-label="Estado actual: warmup">
-                <span>W</span><span>A</span><span>R</span><span>M</span><span>U</span><span>P</span>
+              <div class="live-scoreboard" aria-label="Estado de conexión de la cohorte">
+                <span class="live-scoreboard-label"><i aria-hidden="true"></i> En vivo</span>
+                <strong id="active-ratio">—/—</strong>
+                <span>pipelines en pista</span>
+                <div class="cohort-progress" aria-hidden="true"><i id="cohort-progress-fill"></i></div>
               </div>
             </div>
 
             <dl class="race-stats" aria-label="Resumen de la cohorte">
-              <div><dt>Corredores</dt><dd id="cohort-count">—</dd></div>
-              <div><dt>API activas</dt><dd id="connected-count">—</dd></div>
-              <div><dt>Entregas</dt><dd id="delivered-count">—</dd></div>
-              <div><dt>Periodo</dt><dd id="race-period">Warmup</dd></div>
+              <div><dt>Estudiantes</dt><dd id="cohort-count">—</dd></div>
+              <div><dt>En pista</dt><dd id="connected-count">—</dd></div>
+              <div><dt>Ciclos entregados</dt><dd id="delivered-count">—</dd></div>
+              <div><dt>Ventana</dt><dd id="race-period">Últimos 6</dd></div>
             </dl>
 
             <section class="race-panel" aria-labelledby="race-title">
               <div class="race-heading">
                 <div>
-                  <h3 id="race-title">Accuracy a través del tiempo</h3>
-                  <p>Una línea por estudiante. Pasa el cursor o usa el teclado para seguir un corredor.</p>
+                  <h3 id="race-title">Sprint de submissions</h3>
+                  <p>Cada estación representa un ciclo cerrado. Pasa el cursor o enfoca un punto para ver el recibo.</p>
                 </div>
                 <div class="race-legend" aria-label="Leyenda">
-                  <span><i class="legend-line" aria-hidden="true"></i>Accuracy acumulada</span>
-                  <span><i class="legend-dot" aria-hidden="true"></i>Última posición</span>
+                  <span><i class="legend-dot is-complete" aria-hidden="true"></i>Entregado</span>
+                  <span><i class="legend-dot is-missed" aria-hidden="true"></i>Sin envío</span>
                 </div>
               </div>
-              <div class="race-layout">
+              <div id="operations-view" class="operations-board">
+                <div id="cycle-header" class="cycle-header" aria-hidden="true"></div>
+                <ol id="operations-list" class="operations-list" aria-label="Clasificación por continuidad operacional"></ol>
+                <details class="waiting-grid">
+                  <summary><strong id="waiting-count">—</strong> estudiantes todavía están preparando su pipeline</summary>
+                  <ul id="waiting-list"></ul>
+                </details>
+              </div>
+              <div id="accuracy-view" class="race-layout" hidden>
                 <div class="chart-shell">
                   <svg id="race-chart" class="race-chart" role="img" aria-labelledby="race-chart-title race-chart-desc" viewBox="0 0 960 520" preserveAspectRatio="xMidYMid meet">
                     <title id="race-chart-title">Evolución de accuracy de la cohorte</title>

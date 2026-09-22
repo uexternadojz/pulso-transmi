@@ -55,7 +55,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.6.0",
+    version="0.6.1",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )

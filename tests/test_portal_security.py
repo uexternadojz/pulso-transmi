@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi import HTTPException
@@ -68,6 +68,122 @@ def test_cohort_board_has_an_empty_timeline_before_first_cycle() -> None:
         "timeline": [],
         "count": 0,
     }
+
+
+def test_cohort_board_ranks_recent_operational_continuity() -> None:
+    class Context:
+        def __init__(self, value=None):
+            self.value = value
+
+        async def __aenter__(self):
+            return self.value
+
+        async def __aexit__(self, *_args):
+            return False
+
+    start = datetime(2026, 9, 21, 12, tzinfo=timezone.utc)
+    cycles = [
+        {
+            "cycle_db_id": index,
+            "cycle_id": f"cyc_{index}",
+            "opens_at": start + timedelta(hours=index),
+            "closes_at": start + timedelta(hours=index, minutes=25),
+        }
+        for index in range(6, 0, -1)
+    ]
+    participant_rows = [
+        {
+            "participant_db_id": 1,
+            "participant_id": "stu_ada",
+            "display_name": "Ada",
+            "section_code": "A",
+            "avatar_index": 1,
+            "api_key_active": True,
+            "submission_status": "accepted",
+            "attempt_number": 1,
+            "last_submission_at": start + timedelta(hours=6, minutes=5),
+            "model_version": "ada-v1",
+            "prediction_count": 48,
+            "rank": 2,
+            "accuracy": 80.0,
+            "coverage": 0.5,
+            "calculated_at": start,
+        },
+        {
+            "participant_db_id": 2,
+            "participant_id": "stu_beto",
+            "display_name": "Beto",
+            "section_code": "A",
+            "avatar_index": 2,
+            "api_key_active": True,
+            "submission_status": "accepted",
+            "attempt_number": 1,
+            "last_submission_at": start + timedelta(hours=6, minutes=6),
+            "model_version": "beto-v1",
+            "prediction_count": 48,
+            "rank": 1,
+            "accuracy": 90.0,
+            "coverage": 0.2,
+            "calculated_at": start,
+        },
+    ]
+    submissions = []
+    for participant_id, cycle_ids, version in (
+        (1, range(1, 7), "ada-v1"),
+        (2, (5, 6), "beto-v1"),
+    ):
+        for cycle_id in cycle_ids:
+            submissions.append(
+                {
+                    "participant_db_id": participant_id,
+                    "cycle_db_id": cycle_id,
+                    "cycle_id": f"cyc_{cycle_id}",
+                    "opens_at": start + timedelta(hours=cycle_id),
+                    "closes_at": start + timedelta(hours=cycle_id, minutes=25),
+                    "received_at": start + timedelta(hours=cycle_id, minutes=5),
+                    "model_version": version,
+                    "status": "accepted",
+                    "prediction_count": 48,
+                }
+            )
+
+    class Connection:
+        async def fetchrow(self, _query, *_args):
+            return {
+                "id": 6,
+                "public_id": "cyc_6",
+                "scenario_id": 9,
+                "state": "resolved",
+                "opens_at": start + timedelta(hours=6),
+                "closes_at": start + timedelta(hours=6, minutes=25),
+                "expected_predictions": 48,
+            }
+
+        async def fetch(self, query, *_args):
+            if "left join lateral" in query:
+                return participant_rows
+            if "select id as cycle_db_id" in query:
+                return cycles
+            if "from competition.cycle_entries ce" in query:
+                return submissions
+            return []
+
+    class Pool:
+        def acquire(self):
+            return Context(Connection())
+
+    identity = PortalIdentity(1, "stu_ada", "Ada", "VIS2", "A", "Ada", "hash")
+    result = asyncio.run(cohort_board(Pool(), identity))
+
+    assert result["mode"] == "operations"
+    assert result["operations"]["active_participants"] == 2
+    assert result["operations"]["submissions_total"] == 8
+    assert result["operations"]["steady_participants"] == 1
+    assert [row["display_name"] for row in result["data"]] == ["Ada", "Beto"]
+    assert result["data"][0]["accepted_cycles_window"] == 6
+    assert result["data"][0]["current_streak"] == 6
+    assert result["data"][1]["accepted_cycles_window"] == 2
+    assert result["data"][1]["current_streak"] == 2
 
 
 def test_identity_normalization_accepts_accents_and_spacing() -> None:

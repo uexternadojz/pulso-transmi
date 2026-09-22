@@ -55,6 +55,15 @@ function formatShortDate(value) {
   }).format(new Date(value));
 }
 
+function formatTime(value) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("es-CO", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/Bogota",
+  }).format(new Date(value));
+}
+
 function showMessage(text, type = "info") {
   globalMessage.textContent = text;
   globalMessage.className = type === "error" ? "message error" : "message";
@@ -150,7 +159,7 @@ function renderBoard(board) {
 
   board.data.forEach((row, index) => {
     if (row.api_key_active) activated += 1;
-    if (row.submission_status === "accepted") delivered += 1;
+    if (row.has_started || row.submission_status === "accepted") delivered += 1;
     const avatarIndex = row.avatar_index ?? index;
     const tr = document.createElement("tr");
 
@@ -173,11 +182,12 @@ function renderBoard(board) {
     tr.append(keyCell);
 
     const deliveryCell = document.createElement("td");
-    deliveryCell.append(statusNode(row.submission_status === "accepted" ? "Aceptada" : "Pendiente", row.submission_status === "accepted" ? "success" : "pending"));
+    const hasStarted = row.has_started || row.submission_status === "accepted";
+    deliveryCell.append(statusNode(hasStarted ? "En pista" : "Pendiente", hasStarted ? "success" : "pending"));
     tr.append(deliveryCell);
 
     const countCell = document.createElement("td");
-    countCell.textContent = row.submission_status ? `${row.prediction_count}/${board.cycle?.expected_predictions ?? "—"}` : "—";
+    countCell.textContent = hasStarted ? `${row.accepted_cycles_total ?? 1} ciclos` : "—";
     tr.append(countCell);
 
     const timeCell = document.createElement("td");
@@ -190,10 +200,123 @@ function renderBoard(board) {
     }
   });
 
-  setText("#board-summary", `${activated}/${board.count} API activadas · ${delivered}/${board.count} entregas aceptadas`);
+  setText("#board-summary", `${activated}/${board.count} API activadas · ${delivered}/${board.count} estudiantes en pista`);
   setText("#cohort-count", board.count);
-  setText("#connected-count", activated);
-  setText("#delivered-count", delivered);
+  setText("#connected-count", board.operations?.active_participants ?? delivered);
+  setText("#delivered-count", board.operations?.submissions_total ?? delivered);
+}
+
+function operationalStatus(row, windowSize) {
+  if (row.accepted_cycles_window >= Math.max(1, windowSize - 1)) return "Ritmo estable";
+  if (row.accepted_cycles_window >= 2) return "Automatización activa";
+  return "Primer envío";
+}
+
+function renderOperationsBoard(board) {
+  const operations = board.operations || {};
+  const cycles = operations.cycles || [];
+  const activeRows = board.data.filter((row) => row.has_started);
+  const waitingRows = board.data.filter((row) => !row.has_started);
+  const cycleHeader = document.querySelector("#cycle-header");
+  const list = document.querySelector("#operations-list");
+  const waitingList = document.querySelector("#waiting-list");
+  const activeCount = operations.active_participants ?? activeRows.length;
+
+  setText("#race-mode-label", DEMO_MODE ? "Sprint de conexión · vista previa" : "Sprint de conexión");
+  setText("#phase-status-label", DEMO_MODE ? "Vista de propuesta" : "Competencia activa");
+  setText("#active-runner-count", activeCount);
+  setText("#active-ratio", `${activeCount}/${board.count}`);
+  setText("#race-period", `Últimos ${cycles.length || operations.window_size || 6}`);
+  setText("#waiting-count", waitingRows.length);
+  setText("#home-title", `${activeCount} modelos ya están en pista.`);
+  setText(
+    "#phase-copy",
+    "Este primer tablero mide continuidad operacional. Completa ciclos, protege tu racha y demuestra que el pipeline puede correr solo.",
+  );
+  document.querySelector("#cohort-progress-fill").style.width = `${board.count ? (activeCount / board.count) * 100 : 0}%`;
+
+  cycleHeader.replaceChildren();
+  const headerSpacer = document.createElement("span");
+  headerSpacer.textContent = "Corredor";
+  const headerTrack = document.createElement("div");
+  headerTrack.className = "cycle-header-track";
+  headerTrack.style.setProperty("--cycle-count", Math.max(cycles.length, 1));
+  cycles.forEach((cycle, index) => {
+    const label = document.createElement("span");
+    label.textContent = index === cycles.length - 1 ? "Último" : `−${cycles.length - index - 1} h`;
+    label.title = `${cycle.cycle_id} · cerró ${formatDate(cycle.closes_at)}`;
+    headerTrack.append(label);
+  });
+  const scoreLabel = document.createElement("span");
+  scoreLabel.textContent = "Ritmo";
+  cycleHeader.append(headerSpacer, headerTrack, scoreLabel);
+
+  list.replaceChildren();
+  activeRows.forEach((row, index) => {
+    const item = document.createElement("li");
+    item.className = "operations-runner";
+    item.dataset.runnerId = row.participant_id || row.public_id;
+    item.style.setProperty("--row-index", index);
+    if ((row.participant_id || row.public_id) === currentParticipantId) item.classList.add("is-current");
+
+    const identity = document.createElement("div");
+    identity.className = "operations-identity";
+    const rank = document.createElement("span");
+    rank.className = "operations-rank";
+    rank.textContent = String(row.operations_rank || index + 1).padStart(2, "0");
+    const names = document.createElement("span");
+    names.className = "operations-name";
+    const name = document.createElement("strong");
+    name.textContent = row.display_name;
+    const state = document.createElement("span");
+    state.textContent = operationalStatus(row, cycles.length);
+    names.append(name, state);
+    identity.append(rank, avatarNode(row.avatar_index, row.display_name), names);
+
+    const track = document.createElement("div");
+    track.className = "submission-track";
+    track.style.setProperty("--cycle-count", Math.max(cycles.length, 1));
+    (row.recent_cycles || []).forEach((cycle, cycleIndex) => {
+      const node = document.createElement("span");
+      node.className = `cycle-node ${cycle.submitted ? "is-complete" : "is-missed"}`;
+      node.tabIndex = 0;
+      node.setAttribute("role", "img");
+      const detail = cycle.submitted
+        ? `Entregado ${formatDate(cycle.received_at)} · ${cycle.model_version || "modelo sin versión"}`
+        : "Sin submission oficial";
+      const label = `${cycleIndex === cycles.length - 1 ? "Último ciclo" : `Ciclo ${cycleIndex + 1}`}: ${detail}`;
+      node.setAttribute("aria-label", label);
+      node.dataset.tooltip = `${detail}\n${cycle.cycle_id}`;
+      node.append(document.createElement("i"));
+      track.append(node);
+    });
+
+    const metric = document.createElement("div");
+    metric.className = "operations-metric";
+    const score = document.createElement("strong");
+    score.textContent = `${row.accepted_cycles_window}/${cycles.length || operations.window_size || 6}`;
+    const detail = document.createElement("span");
+    detail.textContent = `Racha ${row.current_streak} · ${row.accepted_cycles_total} total`;
+    metric.append(score, detail);
+    item.append(identity, track, metric);
+    list.append(item);
+  });
+
+  waitingList.replaceChildren();
+  waitingRows.forEach((row, index) => {
+    const item = document.createElement("li");
+    item.append(avatarNode(row.avatar_index ?? index, row.display_name, "avatar-small"));
+    const name = document.createElement("span");
+    name.textContent = row.display_name;
+    item.append(name);
+    waitingList.append(item);
+  });
+
+  document.querySelector("#operations-view").hidden = false;
+  document.querySelector("#accuracy-view").hidden = true;
+  const notice = document.querySelector("#preview-notice");
+  notice.hidden = !DEMO_MODE;
+  if (DEMO_MODE) notice.textContent = "Vista de propuesta con datos simulados. No representa resultados reales.";
 }
 
 function svgElement(name, attributes = {}) {
@@ -396,16 +519,41 @@ function buildDemoData() {
     24, 25, 26, 28, 27, 30, 29, 32,
   ];
   const start = Date.parse("2026-09-08T13:00:00Z");
-  const board = names.map((displayName, index) => ({
+  const demoCycles = Array.from({ length: 6 }, (_, index) => ({
+    cycle_id: `cyc_demo_${index + 1}`,
+    opens_at: new Date(start + (index + 4) * 3600000).toISOString(),
+    closes_at: new Date(start + (index + 4) * 3600000 + 1500000).toISOString(),
+  }));
+  const board = names.map((displayName, index) => {
+    const hasStarted = index < 9;
+    const delivered = hasStarted ? Math.max(1, 6 - Math.floor(index / 2)) : 0;
+    const recentCycles = demoCycles.map((cycle, cycleIndex) => {
+      const submitted = hasStarted && cycleIndex >= 6 - delivered;
+      return {
+        ...cycle,
+        submitted,
+        received_at: submitted ? new Date(new Date(cycle.opens_at).getTime() + 420000).toISOString() : null,
+        model_version: submitted ? ["catboost-v2", "gbm-v1", "extra-trees-v3"][index % 3] : null,
+      };
+    });
+    return {
     participant_id: `demo-${index + 1}`,
     display_name: displayName,
     section_code: "MLOps",
     avatar_index: avatarIndexes[index],
     api_key_active: index < 27,
-    submission_status: index < 22 ? "accepted" : null,
-    prediction_count: index < 22 ? 48 : 0,
-    last_submission_at: index < 22 ? new Date(start + 9 * 86400000 + index * 420000).toISOString() : null,
-  }));
+    submission_status: hasStarted ? "accepted" : null,
+    prediction_count: hasStarted ? 48 : 0,
+    last_submission_at: hasStarted ? recentCycles.filter((item) => item.submitted).at(-1).received_at : null,
+    has_started: hasStarted,
+    accepted_cycles_window: delivered,
+    accepted_cycles_total: hasStarted ? delivered + (9 - index) : 0,
+    current_streak: delivered,
+    window_coverage: delivered / 6,
+    operations_rank: hasStarted ? index + 1 : null,
+    recent_cycles: recentCycles,
+  };
+  });
   const timeline = [];
   const finalScores = [];
   board.forEach((student, index) => {
@@ -437,7 +585,21 @@ function buildDemoData() {
       cycle: { public_id: "warmup-preview", data_cutoff: "2026-09-18T12:00:00Z", expected_predictions: 48, closes_at: "2026-09-19T23:59:00-05:00" },
       submissions: [{ status: "accepted", model_version: "baseline-v1", prediction_count: 48, received_at: "2026-09-18T14:24:00Z" }],
     },
-    board: { mode: "preview", count: board.length, cycle: { public_id: "warmup-preview", expected_predictions: 48 }, data: board, timeline },
+    board: {
+      mode: "operations",
+      count: board.length,
+      cycle: { public_id: "demo-current", expected_predictions: 48 },
+      operations: {
+        window_size: 6,
+        cycles: demoCycles,
+        active_participants: 9,
+        api_key_count: 27,
+        submissions_total: board.reduce((sum, row) => sum + row.accepted_cycles_total, 0),
+        steady_participants: 4,
+      },
+      data: board,
+      timeline,
+    },
   };
 }
 
@@ -448,7 +610,8 @@ async function loadDashboard() {
   };
   renderDashboard(payload.dashboard);
   renderBoard(payload.board);
-  renderRace(payload.board);
+  if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
+  else renderRace(payload.board);
   loginView.hidden = true;
   dashboardView.hidden = false;
   document.body.classList.add("dashboard-mode");

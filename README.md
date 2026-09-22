@@ -6,7 +6,7 @@ consumen observaciones que aparecen con el tiempo, entrenan y reentrenan modelos
 envían pronósticos y compiten en un leaderboard que cambia cuando el sistema
 introduce nuevos patrones y drift.
 
-> **Competencia oficial — 21 de septiembre de 2026:** la versión `0.6.0` activa
+> **Competencia oficial — 21 de septiembre de 2026:** la versión `0.6.1` activa
 > el escenario dinámico de siete días. Cada 30 minutos aparecen observaciones
 > nuevas y cada hora se abre un ciclo de 48 predicciones con 25 minutos para
 > entregar. El portal, la API key personal, los recibos y el leaderboard están
@@ -89,8 +89,8 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.0`) |
-| Portal web | Carrera, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.5.0`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.6.1`) |
+| Portal web | Sprint operativo, API key, rotación, recibos y estado de la cohorte | Sesión estudiantil (`0.6.1`) |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
 | GitHub Actions | Pipeline gratuito de cada estudiante | Ejemplo inicial publicado; automatización completa siguiente fase |
@@ -123,7 +123,7 @@ El ejemplo combina el histórico con el stream incremental, entrena un Random
 Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.6.0`
+## API pública `0.6.1`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -150,6 +150,20 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `POST` | `/v1/portal/api-key/rotate` | Revoca y reemplaza la credencial activa | Sí + sesión |
 | `GET` | `/v1/portal/dashboard` | Identidad, ronda y entregas propias | Sí + sesión |
 | `GET` | `/v1/portal/leaderboard` | Conexión o ranking de la cohorte | Sí + sesión |
+
+### Tablero operativo de arranque
+
+Mientras la cohorte alcanza una cadencia estable, el inicio del portal prioriza
+la evidencia operativa sobre el score compuesto. El **Sprint de submissions**
+ordena a quienes ya empezaron por entregas oficiales en los últimos seis ciclos,
+racha vigente, ciclos totales y hora de la última entrega. Los reintentos no
+otorgan ventaja: cada punto representa el `official_submission_id` de un ciclo.
+
+Cada checkpoint incluye un tooltip con la hora de recepción, la versión del
+modelo y el identificador del ciclo. La lista de estudiantes pendientes se
+mantiene visible sin mezclarla con el ranking de quienes ya enviaron. Cuando el
+score tenga cobertura suficiente, la misma API conserva accuracy y timeline
+para promover el tablero a la carrera de desempeño.
 
 Respuesta esperada de salud:
 

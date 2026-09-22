@@ -383,7 +383,8 @@ async def cohort_board(
             }
         rows = await connection.fetch(
             """
-            select p.public_id as participant_id, p.display_name, p.section_code,
+            select p.id as participant_db_id,
+                   p.public_id as participant_id, p.display_name, p.section_code,
                    coalesce(
                      p.avatar_index,
                      ((row_number() over (order by p.public_id) - 1) % 36)::smallint
@@ -392,32 +393,68 @@ async def cohort_board(
                      select 1 from competition.api_keys k
                      where k.participant_id=p.id and k.revoked_at is null
                    ) as api_key_active,
-                   s.status as submission_status,
-                   s.attempt_number,
-                   s.received_at as last_submission_at,
-                   s.model_version,
+                   latest.status as submission_status,
+                   latest.attempt_number,
+                   latest.received_at as last_submission_at,
+                   latest.model_version,
                    coalesce((
                      select count(*) from competition.predictions pr
-                     where pr.submission_id=s.id
+                     where pr.submission_id=latest.id
                    ), 0) as prediction_count,
                    lb.rank, lb.accuracy, lb.coverage, lb.calculated_at
             from competition.participant_scenarios ps
             join competition.participants p on p.id=ps.participant_id
-            left join competition.cycle_entries ce
-              on ce.participant_id=p.id and ce.cycle_id=$1
-            left join competition.submissions s on s.id=ce.official_submission_id
+            left join lateral (
+                select s.id, s.status, s.attempt_number, s.received_at,
+                       s.model_version
+                from competition.cycle_entries ce
+                join competition.submissions s on s.id=ce.official_submission_id
+                join competition.forecast_cycles fc on fc.id=ce.cycle_id
+                where ce.participant_id=p.id and fc.scenario_id=$1
+                order by s.received_at desc
+                limit 1
+            ) latest on true
             left join competition.leaderboard_latest lb
               on lb.participant_id=p.id
-             and lb.scenario_id=$2
+             and lb.scenario_id=$1
              and lb.window_type='cumulative'
-            where ps.scenario_id=$2 and ps.status='active' and p.kind='student'
-              and p.cohort_code=$3
-            order by lb.rank nulls last,
-                     (s.status='accepted') desc,
-                     api_key_active desc,
-                     p.display_name
+            where ps.scenario_id=$1 and ps.status='active' and p.kind='student'
+              and p.eligible is true
+              and p.cohort_code=$2
+            order by (latest.status='accepted') desc,
+                     api_key_active desc, p.display_name
             """,
-            cycle["id"],
+            cycle["scenario_id"],
+            identity.cohort_code,
+        )
+        recent_cycles = await connection.fetch(
+            """
+            select id as cycle_db_id, public_id as cycle_id, opens_at, closes_at
+            from competition.forecast_cycles
+            where scenario_id=$1 and closes_at <= now()
+            order by opens_at desc
+            limit 6
+            """,
+            cycle["scenario_id"],
+        )
+        official_submissions = await connection.fetch(
+            """
+            select p.id as participant_db_id,
+                   c.id as cycle_db_id, c.public_id as cycle_id,
+                   c.opens_at, c.closes_at,
+                   s.received_at, s.model_version, s.status,
+                   (select count(*) from competition.predictions pr
+                    where pr.submission_id=s.id) as prediction_count
+            from competition.cycle_entries ce
+            join competition.submissions s on s.id=ce.official_submission_id
+            join competition.forecast_cycles c on c.id=ce.cycle_id
+            join competition.participants p on p.id=ce.participant_id
+            join competition.participant_scenarios ps
+              on ps.participant_id=p.id and ps.scenario_id=c.scenario_id
+            where c.scenario_id=$1 and ps.status='active'
+              and p.kind='student' and p.eligible is true and p.cohort_code=$2
+            order by c.opens_at, p.display_name
+            """,
             cycle["scenario_id"],
             identity.cohort_code,
         )
@@ -440,6 +477,7 @@ async def cohort_board(
                   and ss.window_type='cumulative'
                   and ps.status='active'
                   and p.kind='student'
+                  and p.eligible is true
                   and p.cohort_code=$2
             ) history
             where point_number <= 96
@@ -448,9 +486,76 @@ async def cohort_board(
             cycle["scenario_id"],
             identity.cohort_code,
         )
-    mode = "scored" if any(row["accuracy"] is not None for row in rows) else "integration"
+    recent_cycle_rows = [dict(item) for item in reversed(recent_cycles)]
+    submissions_by_participant: dict[int, list[dict[str, object]]] = {}
+    for submission in official_submissions:
+        item = dict(submission)
+        submissions_by_participant.setdefault(item["participant_db_id"], []).append(item)
+
+    board_rows: list[dict[str, object]] = []
+    for source in rows:
+        row = dict(source)
+        participant_db_id = row.pop("participant_db_id")
+        history = submissions_by_participant.get(participant_db_id, [])
+        history_by_cycle = {item["cycle_db_id"]: item for item in history}
+        recent_history = [
+            history_by_cycle.get(recent_cycle["cycle_db_id"])
+            for recent_cycle in recent_cycle_rows
+        ]
+        accepted_window = sum(item is not None for item in recent_history)
+        streak = 0
+        for item in reversed(recent_history):
+            if item is None:
+                break
+            streak += 1
+        total_cycles = len({item["cycle_db_id"] for item in history})
+        row["accepted_cycles_window"] = accepted_window
+        row["accepted_cycles_total"] = total_cycles
+        row["current_streak"] = streak
+        row["has_started"] = total_cycles > 0
+        row["window_coverage"] = (
+            accepted_window / len(recent_cycle_rows) if recent_cycle_rows else 0.0
+        )
+        row["recent_cycles"] = [
+            {
+                "cycle_id": recent_cycle["cycle_id"],
+                "opens_at": recent_cycle["opens_at"],
+                "closes_at": recent_cycle["closes_at"],
+                "submitted": submission is not None,
+                "received_at": submission["received_at"] if submission else None,
+                "model_version": submission["model_version"] if submission else None,
+            }
+            for recent_cycle, submission in zip(recent_cycle_rows, recent_history)
+        ]
+        board_rows.append(row)
+
+    board_rows.sort(
+        key=lambda row: (
+            not row["has_started"],
+            -row["accepted_cycles_window"],
+            -row["current_streak"],
+            -row["accepted_cycles_total"],
+            -(row["last_submission_at"].timestamp() if row["last_submission_at"] else 0),
+            row["display_name"],
+        )
+    )
+    operations_rank = 0
+    for row in board_rows:
+        if row["has_started"]:
+            operations_rank += 1
+            row["operations_rank"] = operations_rank
+        else:
+            row["operations_rank"] = None
+
+    active_count = sum(bool(row["has_started"]) for row in board_rows)
+    api_key_count = sum(bool(row["api_key_active"]) for row in board_rows)
+    submissions_total = sum(int(row["accepted_cycles_total"]) for row in board_rows)
+    steady_count = sum(
+        int(row["accepted_cycles_window"]) >= max(1, len(recent_cycle_rows) - 1)
+        for row in board_rows
+    )
     return {
-        "mode": mode,
+        "mode": "operations",
         "cycle": {
             "cycle_id": cycle["public_id"],
             "state": cycle["state"],
@@ -458,7 +563,22 @@ async def cohort_board(
             "closes_at": cycle["closes_at"],
             "expected_predictions": cycle["expected_predictions"],
         },
-        "data": [dict(row) for row in rows],
+        "operations": {
+            "window_size": len(recent_cycle_rows),
+            "cycles": [
+                {
+                    "cycle_id": item["cycle_id"],
+                    "opens_at": item["opens_at"],
+                    "closes_at": item["closes_at"],
+                }
+                for item in recent_cycle_rows
+            ],
+            "active_participants": active_count,
+            "api_key_count": api_key_count,
+            "submissions_total": submissions_total,
+            "steady_participants": steady_count,
+        },
+        "data": board_rows,
         "timeline": [dict(point) for point in timeline],
-        "count": len(rows),
+        "count": len(board_rows),
     }

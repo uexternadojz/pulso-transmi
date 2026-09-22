@@ -1,7 +1,7 @@
 ---
 title: Progreso de Pulso TransMi
 description: Estado verificable, decisiones vigentes, pendientes y criterios de salida del proyecto.
-updated_at: 2026-09-21
+updated_at: 2026-09-22
 ---
 
 # Progreso del proyecto
@@ -12,9 +12,9 @@ una funcionalidad disponible.
 
 ## Resumen del corte
 
-**Fecha:** 21 de septiembre de 2026
+**Fecha:** 22 de septiembre de 2026
 
-**Versión:** `0.6.0`
+**Versión:** `0.6.1`
 
 **Fase:** competencia dinámica oficial
 
@@ -43,6 +43,7 @@ una funcionalidad disponible.
 | Escenario | Bundle privado de 7 días, 8.076 targets, 673 períodos y 12 estaciones | validación `scenario-admin` |
 | Lifecycle | Importación, validación, freeze, activación, status, pausa y reanudación | `app/scenario_admin.py` |
 | Leaderboard | Ventanas cumulative y rolling 24 h | `score_snapshots` y API |
+| Sprint operativo | Ranking por seis ciclos oficiales, racha y totales, con tooltips y pendientes separados | portal `0.6.1` |
 | Despliegue | Stack levantado en el VPS; API enlazada únicamente a `127.0.0.1:8010` | verificación operativa del corte |
 | Pruebas | 30 pruebas automatizadas más ensayo aislado y smoke público | `tests/` + verificación del corte |
 | Gestión | Proyecto creado en la vertical Academy del Supabase operativo | ID `1dde4b7d-7ab4-4df8-8298-34c25d662750` |
