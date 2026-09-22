@@ -47,6 +47,19 @@ cantidad de emisiones por hora y registra el cambio sin guardar secretos legible
 
 ## Tablero
 
+La carrera de accuracy aparece encima del benchmark operativo. **Acumulada**
+recalcula el WAPE por estación desde el inicio del escenario; **Últimos 6 ciclos**
+lo recalcula sobre los seis ciclos completamente resueltos más recientes en cada
+punto. No es un promedio simple de porcentajes. La fórmula conserva las ausencias
+como predicción cero y muestra cobertura y versiones de modelo en el detalle.
+Una persona sin entregas evaluadas permanece en la leyenda sin una línea ficticia.
+
+Los avatares permiten seleccionar una trayectoria; pulsar de nuevo restaura todas.
+Las etapas corresponden a escenarios con resultados evaluados de la cohorte.
+El selector conserva el histórico entre escenarios; no crea cortes ni resetea datos.
+Los cortes adicionales dentro de un escenario requieren una definición posterior.
+El endpoint autenticado es `GET /v1/portal/accuracy-chart`.
+
 El inicio muestra primero el **Sprint de submissions**, un ranking operativo que
 permite verificar quién ya conectó su pipeline y está entregando de forma
 consistente. La ventana contiene los seis ciclos cerrados más recientes. Cada

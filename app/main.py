@@ -28,6 +28,7 @@ from app.portal import (
     rotate_api_key,
 )
 from app.settings import get_settings
+from app.chart import accuracy_chart
 from app.starter_store import InvalidCursor, StarterStore
 
 
@@ -55,7 +56,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.6.2",
+    version="0.7.0",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )
@@ -487,6 +488,11 @@ async def portal_rotate_api_key(
         identity,
         get_settings().portal_key_issuance_limit_per_hour,
     )
+
+
+@app.get("/v1/portal/accuracy-chart", tags=["portal"])
+async def portal_accuracy_chart(request: Request, identity: PortalIdentity = Depends(portal_participant)):
+    return await accuracy_chart(pool(request), identity)
 
 
 @app.get("/v1/portal/leaderboard", tags=["portal"])

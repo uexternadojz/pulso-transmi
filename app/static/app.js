@@ -603,6 +603,7 @@ async function loadDashboard() {
   };
   renderDashboard(payload.dashboard);
   renderBoard(payload.board);
+  await loadAccuracy(payload.board);
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
   loginView.hidden = true;

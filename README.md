@@ -153,6 +153,11 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 
 ### Tablero operativo de arranque
 
+Desde `0.7.0` el Home añade una carrera de accuracy encima del tablero operativo,
+con vistas acumulada y móvil de seis ciclos resueltos, selector de escenarios
+evaluados y leyenda interactiva de toda la cohorte. Consulta las reglas de
+agregación y etapas en [Portal del estudiante](docs/portal-estudiante.md).
+
 Mientras la cohorte alcanza una cadencia estable, el inicio del portal prioriza
 la evidencia operativa sobre el score compuesto. El **Sprint de submissions**
 ordena a quienes ya empezaron por entregas oficiales en los últimos seis ciclos,
