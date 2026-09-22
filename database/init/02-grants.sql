@@ -15,7 +15,8 @@ grant select on competition.scenario_clock,
     competition.cycle_targets,
     competition.score_snapshots,
     competition.leaderboard_latest,
-    competition.public_scenarios
+    competition.public_scenarios,
+    competition.accuracy_cycle_station
 to academy_api;
 grant select, update on competition.api_keys to academy_api;
 grant insert on competition.api_keys to academy_api;

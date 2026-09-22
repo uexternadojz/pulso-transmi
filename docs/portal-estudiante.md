@@ -60,7 +60,7 @@ El selector conserva el histórico entre escenarios; no crea cortes ni resetea d
 Los cortes adicionales dentro de un escenario requieren una definición posterior.
 El endpoint autenticado es `GET /v1/portal/accuracy-chart`.
 
-El inicio muestra primero el **Sprint de submissions**, un ranking operativo que
+Debajo de la carrera se conserva el **Sprint de submissions**, un ranking operativo que
 permite verificar quién ya conectó su pipeline y está entregando de forma
 consistente. La ventana contiene los seis ciclos cerrados más recientes. Cada
 punto marcado equivale a una entrega oficial aceptada; al enfocarlo o pasar el
@@ -72,10 +72,11 @@ no suma puntos: únicamente cuenta la submission oficial registrada por el
 servidor. Los 32 estudiantes aparecen al tiempo; quienes todavía no han enviado
 se muestran como **Por iniciar** y aún no reciben una posición competitiva.
 
-Esta vista no reemplaza la evaluación del modelo ni presenta una accuracy
-provisional como resultado definitivo. Cuando la cohorte tenga cobertura
-suficiente, el portal puede promover la carrera de desempeño con accuracy,
-cobertura y posición calculadas sobre ground truth revelado.
+El ranking operativo mide continuidad, no calidad predictiva. La carrera superior
+muestra accuracy calculada únicamente sobre ground truth revelado; sus valores
+cambian con cada ciclo resuelto y deben interpretarse junto con la cobertura.
+En la ventana móvil, quien ya no tiene envíos en los últimos seis ciclos conserva
+su trayectoria histórica, pero la leyenda indica **Sin envíos en ventana**.
 
 La cohorte puede ver nombres y estado académico del reto, pero nunca correos,
 documentos, llaves, payloads o predicciones individuales.

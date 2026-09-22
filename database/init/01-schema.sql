@@ -512,4 +512,15 @@ create table ops.audit_events (
 create index audit_events_time_idx on ops.audit_events (occurred_at desc, id desc);
 create index audit_events_entity_idx on ops.audit_events (entity_type, entity_id, occurred_at desc);
 
+create or replace view competition.accuracy_cycle_station as
+select sc.scenario_id, sc.participant_id, sc.station_id, c.public_id as cycle_id,
+       c.closes_at, sum(sc.absolute_error) as error, sum(sc.actual_value) as actual,
+       count(*) as targets, count(*) filter (where not sc.was_missing) as delivered,
+       array_agg(distinct sub.model_version) as model_versions
+from competition.score_components sc
+join competition.forecast_cycles c on c.id=sc.cycle_id
+left join competition.submissions sub on sub.id=sc.submission_id
+where c.state='resolved'
+group by sc.scenario_id,sc.participant_id,sc.station_id,c.public_id,c.closes_at;
+
 commit;

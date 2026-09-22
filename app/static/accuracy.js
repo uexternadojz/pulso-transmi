@@ -8,7 +8,7 @@ function drawAccuracy() {
   const points = stage?.[scoreMode] || [];
   const cycles = stage?.cycles || [];
   setText('#accuracy-explanation', scoreMode === 'cumulative'
-    ? 'Acumulada desde el inicio de la etapa seleccionada. Cada corte conserva su histórico.'
+    ? 'Acumulada desde el inicio de la etapa seleccionada. Las etapas corresponden a escenarios independientes.'
     : 'Cada punto recalcula el WAPE de los últimos seis ciclos de esta etapa (o los disponibles al inicio).');
   document.querySelectorAll('[data-score-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scoreMode === scoreMode)));
   const x = i => 60 + i / Math.max(1, cycles.length-1) * 850;
@@ -38,7 +38,8 @@ function drawAccuracy() {
     button.setAttribute('aria-pressed',String(scoreSelection===row.participant_id));
     button.append(avatarNode(row.avatar_index,row.display_name));
     const text=document.createElement('span');text.textContent=row.display_name;
-    const score=document.createElement('small');score.textContent=history.length?`${Number(history.at(-1).accuracy).toFixed(1)}%`:'Sin resultado';
+    const current=history.at(-1)?.index===cycles.length-1;
+    const score=document.createElement('small');score.textContent=current?`${Number(history.at(-1).accuracy).toFixed(1)}%`:(history.length?'Sin envíos en ventana':'Sin resultado');
     button.append(text,score);legend.append(button);
     button.onclick=()=>{scoreSelection=scoreSelection===row.participant_id?'':row.participant_id;drawAccuracy();setText('#accuracy-detail',history.length?details(row,history.at(-1)):`${row.display_name} · Sin entregas evaluadas en esta ventana.`);};
     if (!history.length) return;
