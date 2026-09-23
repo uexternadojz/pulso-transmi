@@ -549,7 +549,7 @@ async def leaderboard(
             select display_name, kind, eligible, accuracy, raw_wape,
                    accuracy_at_20, coverage, rank, calculated_at
             from competition.leaderboard_latest
-            where window_type=$1
+            where window_type=$1 and kind='student' and eligible is true
             order by rank nulls last, accuracy desc, display_name
             """,
             window,

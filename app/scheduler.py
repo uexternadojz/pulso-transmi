@@ -248,7 +248,10 @@ async def create_snapshot(
         ), participant_scores as (
           select a.participant_id,a.accuracy,d.raw_wape,
                  d.accuracy_at_20,d.coverage
-          from official_accuracy a join diagnostics d using (participant_id)
+          from official_accuracy a
+          join diagnostics d using (participant_id)
+          join competition.participants p on p.id=a.participant_id
+          where p.kind='student' and p.eligible is true
         ), ranked as (
           select *, dense_rank() over (order by accuracy desc,coverage desc) as position
           from participant_scores
