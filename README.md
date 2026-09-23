@@ -148,7 +148,6 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `GET` | `/v1/forecast-cycles/current` | Ciclo abierto y targets exactos | Sí |
 | `GET` | `/v1/me` | Identidad de la API key | Sí + key |
 | `POST` | `/v1/submissions` | Envío atómico e idempotente | Sí + key |
-| `GET` | `/v1/submissions/current` | Recibo propio del ciclo abierto para evitar un segundo intento | Sí + key |
 | `GET` | `/v1/submissions/{id}` | Recibo propio | Sí + key |
 | `GET` | `/v1/leaderboard` | Ranking acumulado o rolling 24 h | Sí + key |
 | `POST` | `/v1/portal/login` | Sesión académica del portal | Sí |
@@ -282,11 +281,6 @@ el período, los horizontes y la cantidad de predicciones que realmente validó
 el servidor. Un `422 invalid_target_set` incluye ejemplos de `missing` y `extra`
 y la instrucción de volver a consultar el ciclo vigente. No se debe corregir un
 timestamp “a mano”.
-
-Antes de entrenar para enviar, `GET /v1/submissions/current` permite comprobar
-si ya hay un recibo oficial propio para el ciclo abierto. Si lo hay, el pipeline
-puede terminar sin gastar otro intento; si devuelve `404 no_submission_for_cycle`,
-puede continuar. Este chequeo es de lectura y está limitado a la propia API key.
 
 ## Inicio rápido local
 

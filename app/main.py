@@ -528,11 +528,13 @@ def jsonable(value: object) -> object:
     return value
 
 
-@app.get("/v1/submissions/current", tags=["submissions"])
+@app.get("/v1/internal/teacher/submissions/current", include_in_schema=False)
 async def current_submission_receipt(
     request: Request,
     identity: ParticipantIdentity = Depends(participant),
 ) -> dict[str, object]:
+    if identity.kind != "admin":
+        raise HTTPException(status_code=403, detail={"code": "teacher_only", "message": "Teacher-only endpoint"})
     return await current_receipt(pool(request), identity)
 
 

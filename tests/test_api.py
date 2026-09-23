@@ -1,10 +1,14 @@
 import os
+import asyncio
 
 os.environ["SKIP_DB_STARTUP"] = "true"
 
 from fastapi.testclient import TestClient
+from fastapi import HTTPException
+import pytest
 
-from app.main import app
+from app.competition import ParticipantIdentity
+from app.main import app, current_submission_receipt
 
 
 def test_health() -> None:
@@ -12,6 +16,19 @@ def test_health() -> None:
         response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_teacher_receipt_is_not_advertised_or_available_to_students() -> None:
+    with TestClient(app) as client:
+        schema = client.get("/openapi.json").json()
+    assert "/v1/internal/teacher/submissions/current" not in schema["paths"]
+
+
+def test_teacher_receipt_rejects_student_before_database_lookup() -> None:
+    identity = ParticipantIdentity(1, "student-1", "Student", "student", 1)
+    with pytest.raises(HTTPException) as error:
+        asyncio.run(current_submission_receipt(None, identity))
+    assert error.value.status_code == 403
 
 
 def test_meta_describes_safe_static_cut_and_stream() -> None:
