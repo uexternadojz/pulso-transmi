@@ -356,3 +356,30 @@ async def receipt(pool: asyncpg.Pool, identity: ParticipantIdentity, public_id: 
         "predictions_received": row["prediction_count"], "is_official": bool(row["is_official"]),
         "payload_hash": f"sha256:{row['payload_hash']}",
     }
+
+
+async def current_receipt(pool: asyncpg.Pool, identity: ParticipantIdentity) -> dict[str, object]:
+    """Return this participant's official delivery for the currently open cycle."""
+    async with pool.acquire() as connection:
+        public_id = await connection.fetchval(
+            """
+            select s.public_id
+            from competition.forecast_cycles c
+            join competition.cycle_entries e on e.cycle_id=c.id
+            join competition.submissions s on s.id=e.official_submission_id
+            where c.state='open' and now()<c.closes_at
+              and e.participant_id=$1
+            order by c.opens_at desc
+            limit 1
+            """,
+            identity.participant_id,
+        )
+    if public_id is None:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "code": "no_submission_for_cycle",
+                "message": "No official submission for the current open cycle",
+            },
+        )
+    return await receipt(pool, identity, public_id)

@@ -15,7 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.competition import ParticipantIdentity, authenticate, receipt, submit
+from app.competition import ParticipantIdentity, authenticate, current_receipt, receipt, submit
 from app.contracts import SubmissionInput
 from app.portal import (
     PortalIdentity,
@@ -56,7 +56,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.7.0",
+    version="0.7.1",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )
@@ -526,6 +526,14 @@ def jsonable(value: object) -> object:
     if isinstance(value, list):
         return [jsonable(item) for item in value]
     return value
+
+
+@app.get("/v1/submissions/current", tags=["submissions"])
+async def current_submission_receipt(
+    request: Request,
+    identity: ParticipantIdentity = Depends(participant),
+) -> dict[str, object]:
+    return await current_receipt(pool(request), identity)
 
 
 @app.get("/v1/submissions/{submission_id}", tags=["submissions"])

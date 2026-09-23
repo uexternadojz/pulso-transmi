@@ -94,7 +94,7 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.7.0`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.7.1`) |
 | Portal web | Carrera de accuracy, benchmark completo, API key, rotación y recibos | Sesión estudiantil |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
@@ -128,7 +128,7 @@ El ejemplo combina el histórico con el stream incremental, entrena un Random
 Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.7.0`
+## API pública `0.7.1`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en
@@ -148,6 +148,7 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `GET` | `/v1/forecast-cycles/current` | Ciclo abierto y targets exactos | Sí |
 | `GET` | `/v1/me` | Identidad de la API key | Sí + key |
 | `POST` | `/v1/submissions` | Envío atómico e idempotente | Sí + key |
+| `GET` | `/v1/submissions/current` | Recibo propio del ciclo abierto para evitar un segundo intento | Sí + key |
 | `GET` | `/v1/submissions/{id}` | Recibo propio | Sí + key |
 | `GET` | `/v1/leaderboard` | Ranking acumulado o rolling 24 h | Sí + key |
 | `POST` | `/v1/portal/login` | Sesión académica del portal | Sí |
@@ -281,6 +282,11 @@ el período, los horizontes y la cantidad de predicciones que realmente validó
 el servidor. Un `422 invalid_target_set` incluye ejemplos de `missing` y `extra`
 y la instrucción de volver a consultar el ciclo vigente. No se debe corregir un
 timestamp “a mano”.
+
+Antes de entrenar para enviar, `GET /v1/submissions/current` permite comprobar
+si ya hay un recibo oficial propio para el ciclo abierto. Si lo hay, el pipeline
+puede terminar sin gastar otro intento; si devuelve `404 no_submission_for_cycle`,
+puede continuar. Este chequeo es de lectura y está limitado a la propia API key.
 
 ## Inicio rápido local
 

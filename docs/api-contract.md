@@ -1,4 +1,4 @@
-# Contrato de API `0.6.0`
+# Contrato de API `0.7.1`
 
 Este documento es el contrato técnico de la plataforma central. Los clientes
 deben descubrir el ciclo vigente en la API y nunca inferirlo a partir de la hora
@@ -208,6 +208,14 @@ devuelve `409`.
 
 Requiere la misma API key. Devuelve el recibo y si continúa siendo oficial;
 nunca permite consultar entregas de otro participante.
+
+### `GET /v1/submissions/current`
+
+Requiere API key. Devuelve el recibo oficial del participante para el ciclo
+abierto en ese momento. Si aún no envió, devuelve `404` con
+`detail.code = "no_submission_for_cycle"`. El pipeline puede consultarlo antes de
+entrenar para evitar una segunda entrega del mismo ciclo. Este endpoint no
+consume intentos ni expone entregas de otros participantes.
 
 ## Leaderboard
 
