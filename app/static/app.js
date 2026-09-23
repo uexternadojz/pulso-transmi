@@ -219,6 +219,8 @@ function operationalStatus(row, windowSize) {
 function renderOperationsBoard(board) {
   const operations = board.operations || {};
   const cycles = operations.cycles || [];
+  const hasOpenCycle = Boolean(board.cycle?.is_open);
+  const trackCount = cycles.length + (hasOpenCycle ? 1 : 0);
   const cycleHeader = document.querySelector("#cycle-header");
   const list = document.querySelector("#operations-list");
   const activeCount = operations.active_participants ?? board.data.filter((row) => row.has_started).length;
@@ -227,7 +229,7 @@ function renderOperationsBoard(board) {
   setText("#phase-status-label", DEMO_MODE ? "Vista de propuesta" : "Competencia activa");
   setText("#active-runner-count", activeCount);
   setText("#active-ratio", `${activeCount}/${board.count}`);
-  setText("#race-period", `Últimos ${cycles.length || operations.window_size || 6}`);
+  setText("#race-period", `Últimos ${cycles.length || operations.window_size || 6}${hasOpenCycle ? " + en curso" : ""}`);
   setText("#home-title", `${activeCount} de ${board.count} modelos están compitiendo.`);
   setText(
     "#phase-copy",
@@ -240,13 +242,19 @@ function renderOperationsBoard(board) {
   headerSpacer.textContent = "Corredor";
   const headerTrack = document.createElement("div");
   headerTrack.className = "cycle-header-track";
-  headerTrack.style.setProperty("--cycle-count", Math.max(cycles.length, 1));
+  headerTrack.style.setProperty("--cycle-count", Math.max(trackCount, 1));
   cycles.forEach((cycle, index) => {
     const label = document.createElement("span");
     label.textContent = index === cycles.length - 1 ? "Último" : `−${cycles.length - index - 1} h`;
     label.title = `${cycle.cycle_id} · cerró ${formatDate(cycle.closes_at)}`;
     headerTrack.append(label);
   });
+  if (hasOpenCycle) {
+    const liveLabel = document.createElement("span");
+    liveLabel.textContent = "En curso";
+    liveLabel.title = `${board.cycle.cycle_id} · cierra ${formatDate(board.cycle.closes_at)}`;
+    headerTrack.append(liveLabel);
+  }
   const scoreLabel = document.createElement("span");
   scoreLabel.textContent = "Ritmo";
   cycleHeader.append(headerSpacer, headerTrack, scoreLabel);
@@ -276,7 +284,7 @@ function renderOperationsBoard(board) {
 
     const track = document.createElement("div");
     track.className = "submission-track";
-    track.style.setProperty("--cycle-count", Math.max(cycles.length, 1));
+    track.style.setProperty("--cycle-count", Math.max(trackCount, 1));
     (row.recent_cycles || []).forEach((cycle, cycleIndex) => {
       const node = document.createElement("span");
       node.className = `cycle-node ${cycle.submitted ? "is-complete" : "is-missed"}`;
@@ -291,6 +299,20 @@ function renderOperationsBoard(board) {
       node.append(document.createElement("i"));
       track.append(node);
     });
+    if (hasOpenCycle) {
+      const submitted = Boolean(row.current_cycle_submitted);
+      const detail = submitted
+        ? `Recibido ${formatDate(row.last_submission_at)} · pendiente de evaluación`
+        : "Ventana abierta · todavía sin envío";
+      const node = document.createElement("span");
+      node.className = `cycle-node ${submitted ? "is-live-submitted" : "is-pending"}`;
+      node.tabIndex = 0;
+      node.setAttribute("role", "img");
+      node.setAttribute("aria-label", `Ciclo en curso: ${detail}`);
+      node.dataset.tooltip = `${detail}\n${board.cycle.cycle_id}`;
+      node.append(document.createElement("i"));
+      track.append(node);
+    }
 
     const metric = document.createElement("div");
     metric.className = "operations-metric";
@@ -596,14 +618,14 @@ function buildDemoData() {
   };
 }
 
-async function loadDashboard() {
+async function loadDashboard({ includeAccuracy = true } = {}) {
   const payload = DEMO_MODE ? buildDemoData() : {
     dashboard: await api("/v1/portal/dashboard"),
     board: await api("/v1/portal/leaderboard"),
   };
   renderDashboard(payload.dashboard);
   renderBoard(payload.board);
-  await loadAccuracy(payload.board);
+  if (includeAccuracy) await loadAccuracy(payload.board);
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
   loginView.hidden = true;
@@ -733,3 +755,20 @@ loadDashboard().catch((error) => {
     errorNode.hidden = false;
   }
 });
+
+let automaticRefreshInFlight = false;
+setInterval(async () => {
+  if (DEMO_MODE || dashboardView.hidden || document.hidden || automaticRefreshInFlight) return;
+  automaticRefreshInFlight = true;
+  try {
+    await loadDashboard({ includeAccuracy: false });
+  } catch (error) {
+    if (error.status === 401) {
+      dashboardView.hidden = true;
+      loginView.hidden = false;
+      document.body.classList.remove("dashboard-mode");
+    }
+  } finally {
+    automaticRefreshInFlight = false;
+  }
+}, 90_000);

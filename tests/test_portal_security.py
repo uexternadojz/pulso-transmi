@@ -100,6 +100,7 @@ def test_cohort_board_ranks_recent_operational_continuity() -> None:
             "avatar_index": 1,
             "api_key_active": True,
             "submission_status": "accepted",
+            "current_cycle_submitted": False,
             "attempt_number": 1,
             "last_submission_at": start + timedelta(hours=6, minutes=5),
             "model_version": "ada-v1",
@@ -117,6 +118,7 @@ def test_cohort_board_ranks_recent_operational_continuity() -> None:
             "avatar_index": 2,
             "api_key_active": True,
             "submission_status": "accepted",
+            "current_cycle_submitted": False,
             "attempt_number": 1,
             "last_submission_at": start + timedelta(hours=6, minutes=6),
             "model_version": "beto-v1",
@@ -154,6 +156,7 @@ def test_cohort_board_ranks_recent_operational_continuity() -> None:
                 "public_id": "cyc_6",
                 "scenario_id": 9,
                 "state": "resolved",
+                "is_open": False,
                 "opens_at": start + timedelta(hours=6),
                 "closes_at": start + timedelta(hours=6, minutes=25),
                 "expected_predictions": 48,
@@ -184,6 +187,7 @@ def test_cohort_board_ranks_recent_operational_continuity() -> None:
     assert result["data"][0]["current_streak"] == 6
     assert result["data"][1]["accepted_cycles_window"] == 2
     assert result["data"][1]["current_streak"] == 2
+    assert result["cycle"]["is_open"] is False
 
 
 def test_identity_normalization_accepts_accents_and_spacing() -> None:

@@ -367,6 +367,7 @@ async def cohort_board(
         cycle = await connection.fetchrow(
             """
             select id, public_id, scenario_id, state, opens_at, closes_at,
+                   (state='open' and now() < closes_at) as is_open,
                    (select count(*) from competition.cycle_targets t where t.cycle_id=c.id) as expected_predictions
             from competition.forecast_cycles c
             order by (state='open' and now() < closes_at) desc, opens_at desc
@@ -394,6 +395,8 @@ async def cohort_board(
                      where k.participant_id=p.id and k.revoked_at is null
                    ) as api_key_active,
                    latest.status as submission_status,
+                   coalesce(latest.cycle_id=$3 and latest.status='accepted', false)
+                       as current_cycle_submitted,
                    latest.attempt_number,
                    latest.received_at as last_submission_at,
                    latest.model_version,
@@ -405,7 +408,7 @@ async def cohort_board(
             from competition.participant_scenarios ps
             join competition.participants p on p.id=ps.participant_id
             left join lateral (
-                select s.id, s.status, s.attempt_number, s.received_at,
+                select s.id, s.cycle_id, s.status, s.attempt_number, s.received_at,
                        s.model_version
                 from competition.cycle_entries ce
                 join competition.submissions s on s.id=ce.official_submission_id
@@ -426,6 +429,7 @@ async def cohort_board(
             """,
             cycle["scenario_id"],
             identity.cohort_code,
+            cycle["id"],
         )
         recent_cycles = await connection.fetch(
             """
@@ -559,6 +563,7 @@ async def cohort_board(
         "cycle": {
             "cycle_id": cycle["public_id"],
             "state": cycle["state"],
+            "is_open": cycle.get("is_open", False),
             "opens_at": cycle["opens_at"],
             "closes_at": cycle["closes_at"],
             "expected_predictions": cycle["expected_predictions"],
