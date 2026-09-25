@@ -1,3 +1,4 @@
+const loadingView = document.querySelector("#loading-view");
 const loginView = document.querySelector("#login-view");
 const dashboardView = document.querySelector("#dashboard-view");
 const globalMessage = document.querySelector("#global-message");
@@ -17,6 +18,29 @@ const RUNNER_COLORS = [
 
 let latestKey = null;
 let currentParticipantId = null;
+
+function showLoading(message = "Estamos comprobando tu sesión y reuniendo los resultados.") {
+  setText("#loading-message", message);
+  loadingView.classList.remove("is-error");
+  document.querySelector("#loading-retry").hidden = true;
+  loadingView.hidden = false;
+  loginView.hidden = true;
+  dashboardView.hidden = true;
+  document.body.classList.remove("dashboard-mode");
+}
+
+function showLogin() {
+  loadingView.hidden = true;
+  dashboardView.hidden = true;
+  loginView.hidden = false;
+  document.body.classList.remove("dashboard-mode");
+}
+
+function showLoadingError() {
+  showLoading("No pudimos conectar con el tablero. Tu sesión puede seguir activa.");
+  loadingView.classList.add("is-error");
+  document.querySelector("#loading-retry").hidden = false;
+}
 
 async function api(path, options = {}) {
   const response = await fetch(path, { credentials: "same-origin", ...options });
@@ -638,6 +662,7 @@ async function loadDashboard({ includeAccuracy = true } = {}) {
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
   loginView.hidden = true;
+  loadingView.hidden = true;
   dashboardView.hidden = false;
   document.body.classList.add("dashboard-mode");
   activateModule(window.location.hash.slice(1), false);
@@ -681,6 +706,7 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
   const errorNode = document.querySelector("#login-error");
   errorNode.hidden = true;
   button.disabled = true;
+  let authenticated = false;
   try {
     const values = Object.fromEntries(new FormData(form).entries());
     await api("/v1/portal/login", {
@@ -688,11 +714,18 @@ document.querySelector("#login-form").addEventListener("submit", async (event) =
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(values),
     });
-    form.reset();
+    authenticated = true;
+    showLoading("Preparando tu tablero y los resultados del corte.");
     await loadDashboard();
+    form.reset();
   } catch (error) {
-    errorNode.textContent = error.message;
-    errorNode.hidden = false;
+    if (authenticated && error.status !== 401) {
+      showLoadingError();
+    } else {
+      showLogin();
+      errorNode.textContent = error.message;
+      errorNode.hidden = false;
+    }
   } finally {
     button.disabled = false;
   }
@@ -775,20 +808,22 @@ document.querySelector("#logout-button").addEventListener("click", async () => {
   if (DEMO_MODE) return showMessage("Vista de propuesta: abre la URL sin ?demo=1 para volver al acceso real.");
   await api("/v1/portal/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   latestKey = null;
-  dashboardView.hidden = true;
-  loginView.hidden = false;
-  document.body.classList.remove("dashboard-mode");
+  showLogin();
   document.querySelector("#secret-panel").hidden = true;
 });
 
-loadDashboard().catch((error) => {
-  document.body.classList.remove("dashboard-mode");
-  if (error.status !== 401) {
-    const errorNode = document.querySelector("#login-error");
-    errorNode.textContent = "El portal no está disponible temporalmente. Intenta de nuevo.";
-    errorNode.hidden = false;
+async function restoreSession() {
+  showLoading();
+  try {
+    await loadDashboard();
+  } catch (error) {
+    if (error.status === 401) showLogin();
+    else showLoadingError();
   }
-});
+}
+
+document.querySelector("#loading-retry").addEventListener("click", restoreSession);
+restoreSession();
 
 let automaticRefreshInFlight = false;
 setInterval(async () => {
@@ -798,9 +833,7 @@ setInterval(async () => {
     await loadDashboard({ includeAccuracy: false });
   } catch (error) {
     if (error.status === 401) {
-      dashboardView.hidden = true;
-      loginView.hidden = false;
-      document.body.classList.remove("dashboard-mode");
+      showLogin();
     }
   } finally {
     automaticRefreshInFlight = false;

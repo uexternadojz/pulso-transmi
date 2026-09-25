@@ -6,9 +6,9 @@
     <meta name="description" content="Portal académico del reto MLOps Pulso TransMi.">
     <title>Pulso TransMi · Portal MLOps</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/styles.css?v=0.7.4">
+    <link rel="stylesheet" href="/assets/styles.css?v=0.7.6">
     <script src="/assets/accuracy.js?v=0.7.4" defer></script>
-    <script src="/assets/app.js?v=0.7.4" defer></script>
+    <script src="/assets/app.js?v=0.7.6" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -29,7 +29,36 @@
     </header>
 
     <main id="contenido">
-      <section id="login-view" class="login-layout" aria-labelledby="login-title">
+      <section id="loading-view" class="loading-layout" aria-labelledby="loading-title" role="status" aria-live="polite">
+        <div class="loading-copy">
+          <p class="eyebrow dark">Pulso TransMi · En ruta</p>
+          <h1 id="loading-title">Preparando la ruta.</h1>
+          <p id="loading-message" class="lead">Estamos comprobando tu sesión y reuniendo los resultados.</p>
+          <button id="loading-retry" class="button secondary" type="button" hidden>Reintentar conexión</button>
+        </div>
+        <div class="loading-scene" aria-hidden="true">
+          <span class="loading-scene-label">Conexión al tablero</span>
+          <div class="loading-track">
+            <span class="loading-stop stop-one"></span>
+            <span class="loading-stop stop-two"></span>
+            <span class="loading-stop stop-three"></span>
+            <div class="loading-bus">
+              <svg viewBox="0 0 220 72" focusable="false" aria-hidden="true">
+                <path d="M10 17h197a8 8 0 0 1 8 8v28H5V25a8 8 0 0 1 5-8Z" fill="#c8a951"/>
+                <path d="M18 25h37v17H18Zm44 0h35v17H62Zm42 0h35v17h-35Zm42 0h35v17h-35Zm42 0h16v17h-16Z" fill="#123725"/>
+                <path d="M6 50h208v7H6Z" fill="#e8f0eb"/>
+                <path d="M99 18v34m5-34v34" stroke="#0d291d" stroke-width="3"/>
+                <circle cx="43" cy="58" r="10" fill="#0d291d" stroke="#e8f0eb" stroke-width="3"/>
+                <circle cx="173" cy="58" r="10" fill="#0d291d" stroke="#e8f0eb" stroke-width="3"/>
+                <path d="M208 30h6" stroke="#f6f7f3" stroke-width="4"/>
+              </svg>
+            </div>
+          </div>
+          <div class="loading-route-meta"><span>Origen</span><span>Datos</span><span>Modelos</span><span>Destino</span></div>
+        </div>
+      </section>
+
+      <section id="login-view" class="login-layout" aria-labelledby="login-title" hidden>
         <div class="intro-panel">
           <p class="eyebrow dark">Proyecto 1 · 2026-II</p>
           <h1 id="login-title">Conecta tu primer modelo.</h1>
