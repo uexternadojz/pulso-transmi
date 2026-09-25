@@ -16,7 +16,7 @@ El login valida únicamente correo institucional + documento. El nombre ingresad
 es una preferencia privada para el saludo; el leaderboard conserva el nombre
 oficial de matrícula.
 
-> **Corte 1 — 24 de septiembre de 2026, 00:00 Bogotá:** la carrera de accuracy,
+> **Corte 1 — 25 de septiembre de 2026, 00:00 Bogotá:** la carrera de accuracy,
 > el ranking acumulado y los totales del Sprint cuentan solo los ciclos abiertos
 > desde este instante. El histórico anterior permanece en la base para auditoría.
 > No cambia el procedimiento
@@ -157,13 +157,13 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `GET` | `/v1/portal/dashboard` | Identidad, ronda y entregas propias | Sí + sesión |
 | `GET` | `/v1/portal/leaderboard` | Conexión o ranking de la cohorte | Sí + sesión |
 | `GET` | `/v1/portal/accuracy-chart` | Accuracy acumulada y móvil de seis ciclos desde Corte 1 | Sí + sesión |
-| `GET` | `/v1/portal/first-cutoff` | Leaderboard desde el 24 de septiembre, 00:00 Bogotá | Sí + sesión |
+| `GET` | `/v1/portal/first-cutoff` | Leaderboard desde el 25 de septiembre, 00:00 Bogotá | Sí + sesión |
 
 ### Cómo leer el Home: desempeño y continuidad
 
 El Home muestra tres vistas complementarias. **La carrera de accuracy** compara
 el desempeño predictivo a lo largo del tiempo; el **Corte 1** reúne los ciclos
-resueltos abiertos desde el 24 de septiembre de 2026 a las 00:00 Bogotá; el
+resueltos abiertos desde el 25 de septiembre de 2026 a las 00:00 Bogotá; el
 **Sprint de submissions** muestra quién está enviando de forma consistente.
 Estar primero en entregas no significa necesariamente tener el modelo más preciso.
 
@@ -171,7 +171,7 @@ Estar primero en entregas no significa necesariamente tener el modelo más preci
 
 | Control o elemento | Cómo interpretarlo |
 |---|---|
-| **Acumulada** | Recalcula el desempeño desde el 24 de septiembre de 2026 a las 00:00 Bogotá hasta cada punto. No incluye ciclos anteriores. |
+| **Acumulada** | Recalcula el desempeño desde el 25 de septiembre de 2026 a las 00:00 Bogotá hasta cada punto. No incluye ciclos anteriores. |
 | **Últimos 6 ciclos** | Cada punto usa los seis ciclos resueltos más recientes hasta ese momento, o los disponibles al inicio. No son las últimas seis entregas personales. |
 | **Corte** | Muestra el Corte 1 del escenario oficial. El inicio es fijo y no borra datos históricos. |
 | **Ejes** | Horizontal: cierre de los ciclos, en hora de Bogotá. Vertical: accuracy de 0 a 100 %, donde más alto es mejor. |

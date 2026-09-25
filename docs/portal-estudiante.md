@@ -48,7 +48,7 @@ cantidad de emisiones por hora y registra el cambio sin guardar secretos legible
 ## Tablero
 
 La carrera de accuracy aparece encima del benchmark operativo. **Acumulada**
-recalcula el WAPE por estación desde el 24 de septiembre de 2026 a las 00:00
+recalcula el WAPE por estación desde el 25 de septiembre de 2026 a las 00:00
 Bogotá; **Últimos 6 ciclos**
 lo recalcula sobre los seis ciclos completamente resueltos más recientes en cada
 punto. No es un promedio simple de porcentajes. La fórmula conserva las ausencias
@@ -60,7 +60,7 @@ Los avatares permiten seleccionar una trayectoria; pulsar de nuevo restaura toda
 El selector muestra el Corte 1 del escenario oficial. El histórico anterior
 permanece en la base para auditoría, pero no entra en la carrera ni en el
 ranking acumulado visible. El
-**Corte 1** tiene inicio fijo el 24 de septiembre de
+**Corte 1** tiene inicio fijo el 25 de septiembre de
 2026 a las 00:00 Bogotá. Reúne ciclos oficiales resueltos abiertos desde ese
 instante y muestra a todos los estudiantes elegibles, incluso sin entregas.
 Cada target ausente cuenta como predicción cero. Consulta accuracy junto a

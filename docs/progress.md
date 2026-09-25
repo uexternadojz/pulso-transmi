@@ -12,13 +12,13 @@ una funcionalidad disponible.
 
 ## Corte 1 desplegado · 25 de septiembre
 
-El Corte 1 quedó definido con inicio fijo el 24 de septiembre a las 00:00
+El Corte 1 quedó definido con inicio fijo el 25 de septiembre a las 00:00
 Bogotá. La carrera acumulada, el ranking del Corte 1 y los totales operativos
 visibles arrancan en ese instante; los ciclos previos permanecen para auditoría.
-La API quedó desplegada y se verificó por el portal público con 36 ciclos
-resueltos y 32 estudiantes; la accuracy final de la carrera coincidió con la del
-leaderboard en las 32 filas. La definición académica y la distinción frente a
-la nota oficial están en [Primer corte y evaluación](primer-corte-evaluacion.md).
+La consulta del corte se verifica con el mismo instante en el leaderboard y la
+carrera de accuracy para los 32 estudiantes. El primer ciclo elegible abrió a
+las 00:40 de Bogotá. La definición académica y la distinción frente a la nota
+oficial están en [Primer corte y evaluación](primer-corte-evaluacion.md).
 Pendiente: fijar el fin del corte y aprobar el criterio de conversión a nota
 antes de escribir calificaciones. Julián prevé iniciar drift la noche del 25 de
 septiembre; aún no se ha cambiado el escenario por esta decisión.

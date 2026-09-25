@@ -1,11 +1,15 @@
 # Primer corte observable para el Proyecto 1
 
 **Decisión docente del 25 de septiembre de 2026.** El primer corte comienza el
-**24 de septiembre de 2026 a las 00:00 America/Bogota**
-(`2026-09-24T05:00:00Z`). Es un inicio fijo, no una ventana móvil. La primera
+**25 de septiembre de 2026 a las 00:00 America/Bogota**
+(`2026-09-25T05:00:00Z`). Es un inicio fijo, no una ventana móvil. La primera
 semana sirvió para aprender a conectar el portal, obtener la API key y operar
 submissions. Desde este instante las ausencias en ciclos elegibles afectan los
 indicadores que servirán de evidencia para la nota del Proyecto 1.
+
+Los ciclos abiertos entre el 21 y el 24 de septiembre siguen almacenados como
+histórico de aprendizaje, pero no forman parte del acumulado, la ventana móvil
+de seis ciclos ni los totales de entregas visibles desde este corte.
 
 ## Qué muestra el leaderboard del Corte 1
 

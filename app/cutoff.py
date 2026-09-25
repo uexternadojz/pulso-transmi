@@ -6,8 +6,8 @@ from datetime import datetime, timezone
 
 import asyncpg
 
-# 24 Sep 2026 00:00 in America/Bogota. Keep this instant fixed and documented.
-FIRST_CUTOFF_UTC = datetime(2026, 9, 24, 5, 0, tzinfo=timezone.utc)
+# 25 Sep 2026 00:00 in America/Bogota. Keep this instant fixed and documented.
+FIRST_CUTOFF_UTC = datetime(2026, 9, 25, 5, 0, tzinfo=timezone.utc)
 FIRST_SCENARIO_CODE = "official-20260921"
 
 

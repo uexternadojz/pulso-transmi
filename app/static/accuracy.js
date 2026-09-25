@@ -8,7 +8,7 @@ function drawAccuracy() {
   const points = stage?.[scoreMode] || [];
   const cycles = stage?.cycles || [];
   setText('#accuracy-explanation', scoreMode === 'cumulative'
-    ? 'Acumulada desde el Corte 1: 24 de septiembre, 00:00 hora de Bogotá. Los ciclos anteriores no cuentan.'
+    ? 'Acumulada desde el Corte 1: 25 de septiembre, 00:00 hora de Bogotá. Los ciclos anteriores no cuentan.'
     : 'Cada punto recalcula el WAPE de los últimos seis ciclos resueltos desde el Corte 1.');
   document.querySelectorAll('[data-score-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scoreMode === scoreMode)));
   const x = i => 60 + i / Math.max(1, cycles.length-1) * 850;

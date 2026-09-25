@@ -121,7 +121,7 @@ carrera se consulta en `GET /v1/portal/accuracy-chart` y excluye ciclos previos.
 
 ### `GET /v1/portal/first-cutoff`
 
-Requiere sesión del portal. Devuelve `starts_at` (24 de septiembre de 2026,
+Requiere sesión del portal. Devuelve `starts_at` (25 de septiembre de 2026,
 00:00 Bogotá), `as_of`, `scenario`, `resolved_cycles` y `data` con una fila por
 estudiante elegible de la cohorte. Cada fila incluye identificador público,
 nombre, grupo, posición, accuracy WAPE por estación, cobertura, ciclos

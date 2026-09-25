@@ -1,5 +1,10 @@
 from datetime import datetime, timedelta, timezone
 from app.chart import build_chart
+from app.cutoff import FIRST_CUTOFF_UTC
+
+
+def test_academic_cut_starts_at_25_september_midnight_bogota():
+    assert FIRST_CUTOFF_UTC == datetime(2026, 9, 25, 5, tzinfo=timezone.utc)
 
 
 def test_windows_recompute_station_wape_and_missing_coverage():
