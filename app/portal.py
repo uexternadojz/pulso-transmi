@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 import asyncpg
 from fastapi import HTTPException
 
+from app.cutoff import FIRST_CUTOFF_UTC
 from app.security import generate_api_key
 
 
@@ -404,7 +405,8 @@ async def cohort_board(
                      select count(*) from competition.predictions pr
                      where pr.submission_id=latest.id
                    ), 0) as prediction_count,
-                   lb.rank, lb.accuracy, lb.coverage, lb.calculated_at
+                   null::integer as rank, null::numeric as accuracy,
+                   null::numeric as coverage, null::timestamptz as calculated_at
             from competition.participant_scenarios ps
             join competition.participants p on p.id=ps.participant_id
             left join lateral (
@@ -414,13 +416,10 @@ async def cohort_board(
                 join competition.submissions s on s.id=ce.official_submission_id
                 join competition.forecast_cycles fc on fc.id=ce.cycle_id
                 where ce.participant_id=p.id and fc.scenario_id=$1
+                  and fc.opens_at >= $4
                 order by s.received_at desc
                 limit 1
             ) latest on true
-            left join competition.leaderboard_latest lb
-              on lb.participant_id=p.id
-             and lb.scenario_id=$1
-             and lb.window_type='cumulative'
             where ps.scenario_id=$1 and ps.status='active' and p.kind='student'
               and p.eligible is true
               and p.cohort_code=$2
@@ -430,16 +429,18 @@ async def cohort_board(
             cycle["scenario_id"],
             identity.cohort_code,
             cycle["id"],
+            FIRST_CUTOFF_UTC,
         )
         recent_cycles = await connection.fetch(
             """
             select id as cycle_db_id, public_id as cycle_id, opens_at, closes_at
             from competition.forecast_cycles
-            where scenario_id=$1 and closes_at <= now()
+            where scenario_id=$1 and closes_at <= now() and opens_at >= $2
             order by opens_at desc
             limit 6
             """,
             cycle["scenario_id"],
+            FIRST_CUTOFF_UTC,
         )
         official_submissions = await connection.fetch(
             """
@@ -455,40 +456,13 @@ async def cohort_board(
             join competition.participants p on p.id=ce.participant_id
             join competition.participant_scenarios ps
               on ps.participant_id=p.id and ps.scenario_id=c.scenario_id
-            where c.scenario_id=$1 and ps.status='active'
+            where c.scenario_id=$1 and c.opens_at >= $3 and ps.status='active'
               and p.kind='student' and p.eligible is true and p.cohort_code=$2
             order by c.opens_at, p.display_name
             """,
             cycle["scenario_id"],
             identity.cohort_code,
-        )
-        timeline = await connection.fetch(
-            """
-            select participant_id, display_name, calculated_at, accuracy,
-                   coverage, rank
-            from (
-                select p.public_id as participant_id, p.display_name,
-                       ss.calculated_at, ss.accuracy, ss.coverage, ss.rank,
-                       row_number() over (
-                           partition by ss.participant_id
-                           order by ss.calculated_at desc
-                       ) as point_number
-                from competition.score_snapshots ss
-                join competition.participants p on p.id=ss.participant_id
-                join competition.participant_scenarios ps
-                  on ps.participant_id=p.id and ps.scenario_id=ss.scenario_id
-                where ss.scenario_id=$1
-                  and ss.window_type='cumulative'
-                  and ps.status='active'
-                  and p.kind='student'
-                  and p.eligible is true
-                  and p.cohort_code=$2
-            ) history
-            where point_number <= 96
-            order by calculated_at, participant_id
-            """,
-            cycle["scenario_id"],
-            identity.cohort_code,
+            FIRST_CUTOFF_UTC,
         )
     recent_cycle_rows = [dict(item) for item in reversed(recent_cycles)]
     submissions_by_participant: dict[int, list[dict[str, object]]] = {}
@@ -584,6 +558,6 @@ async def cohort_board(
             "steady_participants": steady_count,
         },
         "data": board_rows,
-        "timeline": [dict(point) for point in timeline],
+        "timeline": [],
         "count": len(board_rows),
     }

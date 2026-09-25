@@ -29,6 +29,7 @@ from app.portal import (
 )
 from app.settings import get_settings
 from app.chart import accuracy_chart
+from app.cutoff import first_cutoff_board
 from app.starter_store import InvalidCursor, StarterStore
 
 
@@ -495,12 +496,31 @@ async def portal_accuracy_chart(request: Request, identity: PortalIdentity = Dep
     return await accuracy_chart(pool(request), identity)
 
 
+@app.get("/v1/portal/first-cutoff", tags=["portal"])
+async def portal_first_cutoff(
+    request: Request, identity: PortalIdentity = Depends(portal_participant)
+) -> dict[str, object]:
+    return await first_cutoff_board(pool(request), identity.cohort_code)
+
+
 @app.get("/v1/portal/leaderboard", tags=["portal"])
 async def portal_leaderboard(
     request: Request,
     identity: PortalIdentity = Depends(portal_participant),
 ) -> dict[str, object]:
-    return await cohort_board(pool(request), identity)
+    board = await cohort_board(pool(request), identity)
+    cutoff = await first_cutoff_board(pool(request), identity.cohort_code)
+    scores = {row["participant_id"]: row for row in cutoff["data"]}
+    for row in board["data"]:
+        score = scores.get(row["participant_id"])
+        if score:
+            row["rank"] = score["rank"]
+            row["accuracy"] = score["accuracy"]
+            row["coverage"] = score["coverage"]
+            row["calculated_at"] = cutoff["as_of"]
+    board["cutoff_starts_at"] = cutoff["starts_at"]
+    board["resolved_cycles"] = cutoff["resolved_cycles"]
+    return board
 
 
 @app.post("/v1/submissions", tags=["submissions"], status_code=201)
@@ -553,6 +573,34 @@ async def leaderboard(
     window: str = Query(default="cumulative", pattern="^(cumulative|rolling_24h)$"),
     identity: ParticipantIdentity = Depends(participant),
 ) -> dict[str, object]:
+    if window == "cumulative":
+        async with pool(request).acquire() as connection:
+            cohort_code = await connection.fetchval(
+                "select cohort_code from competition.participants where id=$1",
+                identity.participant_id,
+            )
+        cutoff = await first_cutoff_board(pool(request), cohort_code)
+        rows = [
+            {
+                "display_name": row["display_name"],
+                "kind": "student",
+                "eligible": True,
+                "accuracy": row["accuracy"],
+                "raw_wape": row["raw_wape"],
+                "accuracy_at_20": None,
+                "coverage": row["coverage"],
+                "rank": row["rank"],
+                "calculated_at": cutoff["as_of"],
+            }
+            for row in cutoff["data"]
+        ]
+        return {
+            "window": window,
+            "starts_at": cutoff["starts_at"],
+            "resolved_cycles": cutoff["resolved_cycles"],
+            "data": rows,
+            "count": len(rows),
+        }
     async with pool(request).acquire() as connection:
         rows = await connection.fetch(
             """

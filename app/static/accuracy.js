@@ -8,8 +8,8 @@ function drawAccuracy() {
   const points = stage?.[scoreMode] || [];
   const cycles = stage?.cycles || [];
   setText('#accuracy-explanation', scoreMode === 'cumulative'
-    ? 'Acumulada desde el inicio de la etapa seleccionada. Las etapas corresponden a escenarios independientes.'
-    : 'Cada punto recalcula el WAPE de los últimos seis ciclos de esta etapa (o los disponibles al inicio).');
+    ? 'Acumulada desde el Corte 1: 24 de septiembre, 00:00 hora de Bogotá. Los ciclos anteriores no cuentan.'
+    : 'Cada punto recalcula el WAPE de los últimos seis ciclos resueltos desde el Corte 1.');
   document.querySelectorAll('[data-score-mode]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scoreMode === scoreMode)));
   const x = i => 60 + i / Math.max(1, cycles.length-1) * 850;
   const y = value => 350 - value * 3;
@@ -39,7 +39,7 @@ function drawAccuracy() {
     button.append(avatarNode(row.avatar_index,row.display_name));
     const text=document.createElement('span');text.textContent=row.display_name;
     const current=history.at(-1)?.index===cycles.length-1;
-    const score=document.createElement('small');score.textContent=current?`${Number(history.at(-1).accuracy).toFixed(1)}%`:(history.length?'Sin envíos en ventana':'Sin resultado');
+    const score=document.createElement('small');score.textContent=current?`${Number(history.at(-1).accuracy).toFixed(1)}%`:'Sin ciclos resueltos';
     button.append(text,score);legend.append(button);
     button.onclick=()=>{scoreSelection=scoreSelection===row.participant_id?'':row.participant_id;drawAccuracy();setText('#accuracy-detail',history.length?details(row,history.at(-1)):`${row.display_name} · Sin entregas evaluadas en esta ventana.`);};
     if (!history.length) return;

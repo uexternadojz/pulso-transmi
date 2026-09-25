@@ -6,9 +6,9 @@
     <meta name="description" content="Portal académico del reto MLOps Pulso TransMi.">
     <title>Pulso TransMi · Portal MLOps</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/styles.css?v=0.7.2">
-    <script src="/assets/accuracy.js?v=0.7.1" defer></script>
-    <script src="/assets/app.js?v=0.7.2" defer></script>
+    <link rel="stylesheet" href="/assets/styles.css?v=0.7.3">
+    <script src="/assets/accuracy.js?v=0.7.3" defer></script>
+    <script src="/assets/app.js?v=0.7.3" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -127,17 +127,32 @@
 
             <section class="race-panel accuracy-panel" aria-labelledby="accuracy-heading">
               <div class="race-heading">
-                <div><h3 id="accuracy-heading">La carrera de accuracy</h3><p>Resultados evaluados · hora de Bogotá</p></div>
+              <div><h3 id="accuracy-heading">La carrera de accuracy · Corte 1</h3><p>Desde el 24 de septiembre a las 00:00 · hora de Bogotá</p></div>
                 <div class="accuracy-controls">
                   <div role="group" aria-label="Ventana de accuracy"><button type="button" data-score-mode="cumulative" aria-pressed="true">Acumulada</button><button type="button" data-score-mode="rolling6" aria-pressed="false">Últimos 6 ciclos</button></div>
-                  <label>Etapa <select id="accuracy-stage"></select></label>
+                  <label>Corte <select id="accuracy-stage"></select></label>
                 </div>
               </div>
               <p id="accuracy-explanation" class="accuracy-explanation"></p>
               <div class="accuracy-scroll"><svg id="accuracy-chart" viewBox="0 0 1100 430" role="img" aria-label="Accuracy por estudiante a través de los ciclos"></svg></div>
               <p id="accuracy-detail" class="accuracy-detail" role="status">Selecciona un avatar o un punto para explorar los resultados.</p>
               <div id="accuracy-legend" class="accuracy-legend" aria-label="Estudiantes"></div>
-              <p class="accuracy-explanation">Accuracy oficial por estación (WAPE). Las ausencias cuentan como predicción cero; la cobertura indica cuántos targets fueron entregados. Sin entregas evaluadas, no se dibuja una trayectoria.</p>
+              <p class="accuracy-explanation">Accuracy por estación (WAPE) sobre los ciclos resueltos del Corte 1. Las ausencias cuentan como predicción cero y se muestran con 0 % de cobertura. Los ciclos anteriores al corte no se incluyen.</p>
+            </section>
+
+            <section class="race-panel cutoff-panel" aria-labelledby="cutoff-heading">
+              <div class="race-heading">
+                <div>
+                  <h3 id="cutoff-heading">Corte 1 · leaderboard desde el 24 de septiembre</h3>
+                  <p>Desde las 00:00, hora de Bogotá · solo ciclos resueltos · actualización en vivo</p>
+                </div>
+              </div>
+              <p id="cutoff-summary" class="accuracy-explanation">Cargando el primer corte…</p>
+              <div class="table-wrap"><table>
+                <thead><tr><th scope="col">Posición</th><th scope="col">Estudiante</th><th scope="col">Grupo</th><th scope="col">Accuracy</th><th scope="col">Cobertura</th><th scope="col">Ciclos entregados</th><th scope="col">Última entrega</th></tr></thead>
+                <tbody id="cutoff-body"></tbody>
+              </table></div>
+              <p class="accuracy-explanation">Las ausencias cuentan como predicción cero. Este tablero aporta evidencia para evaluar el Proyecto 1; no publica notas oficiales. Accuracy y cobertura se calculan sobre los mismos ciclos resueltos desde el corte.</p>
             </section>
 
             <section class="race-panel" aria-labelledby="race-title">

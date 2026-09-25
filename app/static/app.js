@@ -626,12 +626,46 @@ async function loadDashboard({ includeAccuracy = true } = {}) {
   renderDashboard(payload.dashboard);
   renderBoard(payload.board);
   if (includeAccuracy) await loadAccuracy(payload.board);
+  if (DEMO_MODE) {
+    setText("#cutoff-summary", "El Corte 1 se muestra solo con datos reales del reto.");
+  } else {
+    try {
+      renderFirstCutoff(await api("/v1/portal/first-cutoff"));
+    } catch (_) {
+      setText("#cutoff-summary", "No se pudo cargar el Corte 1. Usa Actualizar datos para reintentar.");
+    }
+  }
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
   loginView.hidden = true;
   dashboardView.hidden = false;
   document.body.classList.add("dashboard-mode");
   activateModule(window.location.hash.slice(1), false);
+}
+
+function renderFirstCutoff(board) {
+  const body = document.querySelector("#cutoff-body");
+  body.replaceChildren();
+  const cycles = Number(board.resolved_cycles || 0);
+  setText("#cutoff-summary", `${cycles} ciclos resueltos desde el corte · actualizado ${formatDate(board.as_of)} · la nota del Proyecto 1 aún no está asignada.`);
+  for (const row of board.data || []) {
+    const tr = document.createElement("tr");
+    const values = [
+      cycles ? String(row.rank) : "—",
+      row.display_name,
+      row.section_code || "—",
+      cycles ? `${Number(row.accuracy).toFixed(1)}%` : "—",
+      cycles ? `${(Number(row.coverage) * 100).toFixed(1)}%` : "—",
+      `${row.delivered_cycles}/${cycles}`,
+      row.last_submission_at ? formatDate(row.last_submission_at) : "Sin entrega en el corte",
+    ];
+    for (const value of values) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.append(td);
+    }
+    body.append(tr);
+  }
 }
 
 document.querySelectorAll("[data-module-target]").forEach((button) => {

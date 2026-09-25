@@ -114,11 +114,21 @@ por estudiante en una hora, incluida la creación inicial.
 Requieren sesión. El primero entrega identidad, prefijo de credencial, ronda y
 recibos propios. El segundo muestra únicamente nombre, grupo, estado de
 activación, entrega y métricas de la cohorte; nunca correo ni documento. Cada
-participante incluye un `avatar_index` persistido y único dentro de la cohorte, y la respuesta
-incluye `timeline`, con hasta 96 snapshots acumulados por participante
-(`calculated_at`, `accuracy`, `coverage` y `rank`). Antes del primer score,
-`timeline` es una lista vacía: el cliente debe presentar el estado de warmup sin
-fabricar resultados.
+participante incluye un `avatar_index` persistido y único dentro de la cohorte.
+Accuracy, cobertura y posición corresponden al Corte 1; los totales operativos
+cuentan entregas desde su inicio. `timeline` queda vacío: la serie para la
+carrera se consulta en `GET /v1/portal/accuracy-chart` y excluye ciclos previos.
+
+### `GET /v1/portal/first-cutoff`
+
+Requiere sesión del portal. Devuelve `starts_at` (24 de septiembre de 2026,
+00:00 Bogotá), `as_of`, `scenario`, `resolved_cycles` y `data` con una fila por
+estudiante elegible de la cohorte. Cada fila incluye identificador público,
+nombre, grupo, posición, accuracy WAPE por estación, cobertura, ciclos
+entregados y última entrega dentro del corte. Selecciona ciclos oficiales
+resueltos por su hora real `opens_at`, no por la hora virtual de los targets.
+Un ciclo sin entrega sigue contribuyendo al error como predicción cero. No
+devuelve nota oficial ni datos de identificación o predicciones privadas.
 
 ### `GET /v1/me`
 
@@ -215,6 +225,10 @@ nunca permite consultar entregas de otro participante.
 
 Requiere API key. `window` acepta `cumulative` o `rolling_24h`. Publica nombre, tipo,
 elegibilidad, accuracy, WAPE crudo, accuracy@20, cobertura, posición y fecha.
+`cumulative` se calcula desde el Corte 1 sobre ciclos resueltos y añade
+`starts_at` y `resolved_cycles`; `accuracy_at_20` es `null` en esta ventana
+porque el agregado del corte no lo calcula. `rolling_24h` conserva el snapshot
+operativo previo y su definición móvil.
 No publica API keys, parámetros de modelos ni predicciones individuales.
 
 La métrica oficial calcula WAPE por estación, transforma cada resultado a

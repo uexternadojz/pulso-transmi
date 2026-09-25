@@ -1,7 +1,7 @@
 ---
 title: Progreso de Pulso TransMi
 description: Estado verificable, decisiones vigentes, pendientes y criterios de salida del proyecto.
-updated_at: 2026-09-22
+updated_at: 2026-09-25
 ---
 
 # Progreso del proyecto
@@ -9,6 +9,17 @@ updated_at: 2026-09-22
 Esta bitácora separa trabajo terminado, trabajo en curso y diseño planificado. Se
 actualiza cuando cambia el estado operativo; una idea documentada no equivale a
 una funcionalidad disponible.
+
+## Trabajo en curso · 25 de septiembre
+
+El Corte 1 quedó definido con inicio fijo el 24 de septiembre a las 00:00
+Bogotá. Se implementó en el repositorio un leaderboard separado basado en
+ciclos oficiales resueltos, con ausencias reflejadas en el score y cobertura
+visible. La definición académica y la distinción frente a la nota oficial están
+en [Primer corte y evaluación](primer-corte-evaluacion.md). Pendiente: verificar
+el despliegue público, fijar el fin del corte y aprobar el criterio de conversión
+a nota antes de escribir calificaciones. Julián prevé iniciar drift la noche
+del 25 de septiembre; aún no se ha cambiado el escenario por esta decisión.
 
 ## Resumen del corte
 

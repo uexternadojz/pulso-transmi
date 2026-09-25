@@ -16,9 +16,10 @@ El login valida únicamente correo institucional + documento. El nombre ingresad
 es una preferencia privada para el saludo; el leaderboard conserva el nombre
 oficial de matrícula.
 
-> **Actualización del portal — 22 de septiembre de 2026:** el Home incorpora
-> la **carrera de accuracy**, con histórico acumulado y ventana móvil de seis
-> ciclos evaluados, encima del tablero de entregas. No cambia el procedimiento
+> **Corte 1 — 24 de septiembre de 2026, 00:00 Bogotá:** la carrera de accuracy,
+> el ranking acumulado y los totales del Sprint cuentan solo los ciclos abiertos
+> desde este instante. El histórico anterior permanece en la base para auditoría.
+> No cambia el procedimiento
 > para enviar predicciones ni requiere generar otra API key.
 
 La matrícula activa ya está precargada: 32 estudiantes (20 del grupo A y 12 del
@@ -149,28 +150,30 @@ encuentra en `/docs`. En el VPS el proceso escucha únicamente en
 | `GET` | `/v1/me` | Identidad de la API key | Sí + key |
 | `POST` | `/v1/submissions` | Envío atómico e idempotente | Sí + key |
 | `GET` | `/v1/submissions/{id}` | Recibo propio | Sí + key |
-| `GET` | `/v1/leaderboard` | Ranking acumulado o rolling 24 h | Sí + key |
+| `GET` | `/v1/leaderboard` | Ranking acumulado desde Corte 1 o rolling 24 h | Sí + key |
 | `POST` | `/v1/portal/login` | Sesión académica del portal | Sí |
 | `POST` | `/v1/portal/api-key` | Emisión única de credencial personal | Sí + sesión |
 | `POST` | `/v1/portal/api-key/rotate` | Revoca y reemplaza la credencial activa | Sí + sesión |
 | `GET` | `/v1/portal/dashboard` | Identidad, ronda y entregas propias | Sí + sesión |
 | `GET` | `/v1/portal/leaderboard` | Conexión o ranking de la cohorte | Sí + sesión |
-| `GET` | `/v1/portal/accuracy-chart` | Histórico de accuracy acumulada y móvil de seis ciclos por etapa | Sí + sesión |
+| `GET` | `/v1/portal/accuracy-chart` | Accuracy acumulada y móvil de seis ciclos desde Corte 1 | Sí + sesión |
+| `GET` | `/v1/portal/first-cutoff` | Leaderboard desde el 24 de septiembre, 00:00 Bogotá | Sí + sesión |
 
 ### Cómo leer el Home: desempeño y continuidad
 
-El Home muestra dos vistas complementarias. **La carrera de accuracy** compara
-el desempeño predictivo a lo largo del tiempo; el **Sprint de submissions**, que
-se conserva debajo, muestra quién está enviando de forma consistente. Estar
-primero en entregas no significa necesariamente tener el modelo más preciso.
+El Home muestra tres vistas complementarias. **La carrera de accuracy** compara
+el desempeño predictivo a lo largo del tiempo; el **Corte 1** reúne los ciclos
+resueltos abiertos desde el 24 de septiembre de 2026 a las 00:00 Bogotá; el
+**Sprint de submissions** muestra quién está enviando de forma consistente.
+Estar primero en entregas no significa necesariamente tener el modelo más preciso.
 
 #### Carrera de accuracy
 
 | Control o elemento | Cómo interpretarlo |
 |---|---|
-| **Acumulada** | Recalcula el desempeño desde el inicio de la etapa hasta cada punto; conserva el efecto de los ciclos anteriores. |
+| **Acumulada** | Recalcula el desempeño desde el 24 de septiembre de 2026 a las 00:00 Bogotá hasta cada punto. No incluye ciclos anteriores. |
 | **Últimos 6 ciclos** | Cada punto usa los seis ciclos resueltos más recientes hasta ese momento, o los disponibles al inicio. No son las últimas seis entregas personales. |
-| **Etapa** | Selecciona un escenario con resultados evaluados. No borra datos ni reinicia el score; los futuros cortes dentro de un escenario aún están por definir. |
+| **Corte** | Muestra el Corte 1 del escenario oficial. El inicio es fijo y no borra datos históricos. |
 | **Ejes** | Horizontal: cierre de los ciclos, en hora de Bogotá. Vertical: accuracy de 0 a 100 %, donde más alto es mejor. |
 | **Avatares y leyenda** | Incluyen a los 32 estudiantes. Pulsa un avatar para resaltar su trayectoria; pulsa de nuevo para volver a compararlas todas. |
 | **Puntos y detalle** | Al pasar el cursor o enfocar un punto puedes consultar accuracy, cobertura, ciclos entregados, fecha, ciclo y versiones de modelo. |
@@ -184,10 +187,8 @@ los ciclos; el denominador de demanda se protege con un mínimo de 1.
 - **Una ausencia cuenta como predicción cero**, por lo que la continuidad también
   afecta el score. Revisa siempre la cobertura: es la proporción de targets
   entregados frente a los esperados en esa ventana.
-- **Sin resultado** significa que todavía no hay entregas evaluadas para esa
-  vista. El portal no inventa una trayectoria. Si antes hubo resultados pero ya
-  no hay envíos dentro de la ventana móvil actual, indica **Sin envíos en ventana**
-  y conserva la curva histórica.
+- **Sin ciclos resueltos** significa que aún no hay ground truth para calcular
+  accuracy. Una vez resueltos, quien no entregó aparece en 0 % con cobertura 0 %.
 - **Recibido no significa evaluado**: tu submission puede aparecer en el tablero
   de entregas antes de tener accuracy. El gráfico solo incorpora ciclos resueltos,
   cuando ya se reveló la demanda real necesaria para evaluarlos.
@@ -199,10 +200,20 @@ Por ejemplo, si entregaste solo dos de los últimos seis ciclos, la ventana móv
 no mide únicamente esos dos: también contempla las ausencias de los otros cuatro.
 Por eso conviene automatizar los envíos y luego mejorar el modelo.
 
+#### Corte 1 y evaluación
+
+El Corte 1 muestra a toda la cohorte, incluidos quienes aún no han entregado.
+Cada target ausente se evalúa como predicción cero; el tablero indica accuracy,
+cobertura y ciclos entregados para interpretar el resultado. Este corte aporta
+evidencia para el Proyecto 1, pero el ranking no es una nota oficial. El criterio,
+las excepciones y el peso de este corte dentro del proyecto se fijan antes de
+registrar calificaciones. La definición completa y reproducible está en
+[Primer corte y evaluación](docs/primer-corte-evaluacion.md).
+
 #### Sprint de submissions
 
 Este tablero operativo ordena a quienes ya empezaron por entregas oficiales en los últimos seis ciclos,
-racha vigente, ciclos totales y hora de la última entrega. Los reintentos no
+racha vigente, ciclos totales desde el Corte 1 y hora de la última entrega. Los reintentos no
 otorgan ventaja: cada punto representa el `official_submission_id` de un ciclo.
 
 Cada checkpoint incluye un tooltip con la hora de recepción, la versión del

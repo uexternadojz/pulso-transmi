@@ -302,7 +302,7 @@ input::placeholder { color: #78877f; }
 .legend-dot.is-pending { border-radius: 2px; background: #d8ddd9; }
 .legend-dot.is-live-submitted { border-radius: 50%; background: var(--gold-dark); }
 
-.accuracy-panel { margin-bottom: 1.5rem; }
+.accuracy-panel, .cutoff-panel { margin-bottom: 1.5rem; }
 .accuracy-controls { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
 .accuracy-controls button, .accuracy-controls select { min-height:44px; padding:.6rem .8rem; border:1px solid var(--border); background:var(--surface); color:var(--ink); font:inherit; font-size:.8rem; cursor:pointer; }
 .accuracy-controls button[aria-pressed="true"] { background:var(--forest-700); color:white; }

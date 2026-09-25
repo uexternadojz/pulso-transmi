@@ -48,17 +48,27 @@ cantidad de emisiones por hora y registra el cambio sin guardar secretos legible
 ## Tablero
 
 La carrera de accuracy aparece encima del benchmark operativo. **Acumulada**
-recalcula el WAPE por estación desde el inicio del escenario; **Últimos 6 ciclos**
+recalcula el WAPE por estación desde el 24 de septiembre de 2026 a las 00:00
+Bogotá; **Últimos 6 ciclos**
 lo recalcula sobre los seis ciclos completamente resueltos más recientes en cada
 punto. No es un promedio simple de porcentajes. La fórmula conserva las ausencias
 como predicción cero y muestra cobertura y versiones de modelo en el detalle.
-Una persona sin entregas evaluadas permanece en la leyenda sin una línea ficticia.
+Una persona sin entregas aparece en 0 % cuando hay ciclos resueltos, con
+cobertura 0 %.
 
 Los avatares permiten seleccionar una trayectoria; pulsar de nuevo restaura todas.
-Las etapas corresponden a escenarios con resultados evaluados de la cohorte.
-El selector conserva el histórico entre escenarios; no crea cortes ni resetea datos.
-Los cortes adicionales dentro de un escenario requieren una definición posterior.
+El selector muestra el Corte 1 del escenario oficial. El histórico anterior
+permanece en la base para auditoría, pero no entra en la carrera ni en el
+ranking acumulado visible. El
+**Corte 1** tiene inicio fijo el 24 de septiembre de
+2026 a las 00:00 Bogotá. Reúne ciclos oficiales resueltos abiertos desde ese
+instante y muestra a todos los estudiantes elegibles, incluso sin entregas.
+Cada target ausente cuenta como predicción cero. Consulta accuracy junto a
+cobertura y ciclos entregados. Es evidencia para el Proyecto 1, no una nota
+publicada; el peso y la conversión a nota siguen pendientes de definición
+docente. Consulta [Primer corte y evaluación](primer-corte-evaluacion.md).
 El endpoint autenticado es `GET /v1/portal/accuracy-chart`.
+El tablero del corte usa `GET /v1/portal/first-cutoff`.
 
 Debajo de la carrera se conserva el **Sprint de submissions**, un ranking operativo que
 permite verificar quién ya conectó su pipeline y está entregando de forma
@@ -67,7 +77,7 @@ punto marcado equivale a una entrega oficial aceptada; al enfocarlo o pasar el
 cursor aparecen la hora, el modelo y el identificador del ciclo.
 
 El orden usa, en este orden: entregas en la ventana, racha vigente, ciclos
-oficiales totales y hora de la última entrega. Enviar varias veces al mismo ciclo
+oficiales desde el Corte 1 y hora de la última entrega. Enviar varias veces al mismo ciclo
 no suma puntos: únicamente cuenta la submission oficial registrada por el
 servidor. Los 32 estudiantes aparecen al tiempo; quienes todavía no han enviado
 se muestran como **Por iniciar** y aún no reciben una posición competitiva.
@@ -75,8 +85,8 @@ se muestran como **Por iniciar** y aún no reciben una posición competitiva.
 El ranking operativo mide continuidad, no calidad predictiva. La carrera superior
 muestra accuracy calculada únicamente sobre ground truth revelado; sus valores
 cambian con cada ciclo resuelto y deben interpretarse junto con la cobertura.
-En la ventana móvil, quien ya no tiene envíos en los últimos seis ciclos conserva
-su trayectoria histórica, pero la leyenda indica **Sin envíos en ventana**.
+En la ventana móvil, quien deja de enviar acumula errores por las ausencias;
+consulta también la cobertura para interpretar el descenso.
 
 La cohorte puede ver nombres y estado académico del reto, pero nunca correos,
 documentos, llaves, payloads o predicciones individuales.
