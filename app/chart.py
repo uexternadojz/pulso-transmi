@@ -25,10 +25,13 @@ def build_chart(rows):
                     for sample in samples:
                         stations[sample['station_id']][0] += sample['error']
                         stations[sample['station_id']][1] += sample['actual']
-                    accuracy = 100 * sum(max(0, 1-e/max(1,a)) for e,a in stations.values()) / len(stations)
+                    accuracy = (
+                        100 * sum(max(0, 1-e/max(1,a)) for e,a in stations.values()) / len(stations)
+                        if stations else 0
+                    )
                     points[mode].append({
                         'participant_id': person, 'accuracy': accuracy,
-                        'coverage': delivered / sum(s['targets'] for s in samples),
+                        'coverage': delivered / sum(s['targets'] for s in samples) if samples else 0,
                         'cycle_id': cycle_id, 'at': cycle['at'], 'index': index,
                         'window_cycles': len(window),
                         'delivered_cycles': sum(any(s['delivered'] for s in c['people'].get(person, [])) for _,c in window),
@@ -42,20 +45,27 @@ def build_chart(rows):
 async def accuracy_chart(pool, identity):
     async with pool.acquire() as connection:
         rows = await connection.fetch('''
-            select sc.scenario_id, sc.cycle_id, sc.closes_at,
+            select sc.scenario_id, c.public_id as cycle_id, c.closes_at,
                    p.public_id as participant_id, sc.station_id,
-                   sc.error, sc.actual, sc.targets, sc.delivered, sc.model_versions
-            from competition.accuracy_cycle_station sc
-            join competition.forecast_cycles c
-              on c.public_id=sc.cycle_id and c.scenario_id=sc.scenario_id
+                   sum(sc.absolute_error) as error,
+                   sum(sc.actual_value) as actual,
+                   count(*) as targets,
+                   count(*) filter (where not sc.was_missing) as delivered,
+                   array_agg(distinct sub.model_version) as model_versions
+            from competition.forecast_cycles c
             join competition.public_scenarios scenario
-              on scenario.id=sc.scenario_id
+              on scenario.id=c.scenario_id
+            join competition.score_components sc
+              on sc.cycle_id=c.id and sc.scenario_id=c.scenario_id
             join competition.participants p on p.id=sc.participant_id
             join competition.participant_scenarios ps
               on ps.participant_id=p.id and ps.scenario_id=sc.scenario_id
+            left join competition.submissions sub on sub.id=sc.submission_id
             where p.cohort_code=$1 and p.kind='student' and p.eligible
-              and ps.status='active' and scenario.code=$2 and c.opens_at >= $3
-            order by sc.scenario_id,sc.closes_at
+              and ps.status='active' and scenario.code=$2
+              and c.state='resolved' and c.opens_at >= $3
+            group by sc.scenario_id,c.id,p.public_id,sc.station_id
+            order by sc.scenario_id,c.closes_at
         ''', identity.cohort_code, FIRST_SCENARIO_CODE, FIRST_CUTOFF_UTC)
     chart = build_chart(rows)
     for stage in chart['stages']:

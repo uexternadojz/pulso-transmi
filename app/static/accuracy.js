@@ -1,12 +1,13 @@
-let accuracyData, accuracyBoard, scoreMode = 'cumulative', scoreSelection = '';
+let accuracyData, accuracyBoard, accuracyLoadError = false, scoreMode = 'cumulative', scoreSelection = '';
 
 function drawAccuracy() {
-  const stage = accuracyData.stages.find(s => s.id === document.querySelector('#accuracy-stage').value);
+  const stage = accuracyData?.stages?.at(-1);
   const svg = document.querySelector('#accuracy-chart');
   const legend = document.querySelector('#accuracy-legend');
   svg.replaceChildren(); legend.replaceChildren();
   const points = stage?.[scoreMode] || [];
   const cycles = stage?.cycles || [];
+  setText('#accuracy-ranking-title', scoreMode === 'cumulative' ? 'Clasificación acumulada' : 'Clasificación · últimos 6 ciclos');
   setText('#accuracy-explanation', scoreMode === 'cumulative'
     ? 'Acumulada desde el Corte 1: 25 de septiembre, 00:00 hora de Bogotá. Los ciclos anteriores no cuentan.'
     : 'Cada punto recalcula el WAPE de los últimos seis ciclos resueltos desde el Corte 1.');
@@ -29,17 +30,30 @@ function drawAccuracy() {
   });
   const details = (row,p) => `${row.display_name} · ${Number(p.accuracy).toFixed(1)}% · Cobertura ${(p.coverage*100).toFixed(0)}% · ${p.delivered_cycles}/${p.window_cycles} ciclos entregados · ${formatDate(p.at)} · ${p.cycle_id} · Modelos: ${(p.model_versions||[]).join(', ') || '—'}`;
   const endpoints=[];
-  accuracyBoard.data.forEach((row,i)=>{
+  const lastScore = new Map();
+  points.forEach(point => lastScore.set(point.participant_id, point));
+  const ranked = rankedStudents(accuracyBoard.data);
+  if (scoreMode === 'rolling6' && points.length) ranked.sort((a,b) =>
+    Number(lastScore.get(b.participant_id)?.accuracy || 0) - Number(lastScore.get(a.participant_id)?.accuracy || 0)
+    || Number(lastScore.get(b.participant_id)?.coverage || 0) - Number(lastScore.get(a.participant_id)?.coverage || 0)
+    || a.display_name.localeCompare(b.display_name, 'es'));
+  ranked.forEach((row,i)=>{
     const history=points.filter(p=>p.participant_id===row.participant_id);
     const color=RUNNER_COLORS[(row.avatar_index??i)%RUNNER_COLORS.length];
     const active=!scoreSelection || scoreSelection===row.participant_id;
     const button=document.createElement('button');button.type='button';
     button.className='accuracy-person';button.style.setProperty('--runner-color',color);
     button.setAttribute('aria-pressed',String(scoreSelection===row.participant_id));
+    const rank=document.createElement('strong');rank.className='accuracy-rank';
+    rank.textContent=accuracyBoard.resolved_cycles ? String(scoreMode === 'cumulative' ? (row.rank || i+1) : i+1).padStart(2,'0') : '—';
+    button.append(rank);
     button.append(avatarNode(row.avatar_index,row.display_name));
     const text=document.createElement('span');text.textContent=row.display_name;
-    const current=history.at(-1)?.index===cycles.length-1;
-    const score=document.createElement('small');score.textContent=current?`${Number(history.at(-1).accuracy).toFixed(1)}%`:'Sin ciclos resueltos';
+    const current=history.length && history.at(-1).index===cycles.length-1;
+    const score=document.createElement('small');
+    score.textContent=accuracyBoard.resolved_cycles
+      ? `${Number(current ? history.at(-1).accuracy : (scoreMode === 'cumulative' ? row.accuracy : 0) || 0).toFixed(1)}%`
+      : 'Sin ciclos resueltos';
     button.append(text,score);legend.append(button);
     button.onclick=()=>{scoreSelection=scoreSelection===row.participant_id?'':row.participant_id;drawAccuracy();setText('#accuracy-detail',history.length?details(row,history.at(-1)):`${row.display_name} · Sin entregas evaluadas en esta ventana.`);};
     if (!history.length) return;
@@ -66,20 +80,21 @@ function drawAccuracy() {
     const label=svgElement('text',{x:972,y:labelY+4,fill:color,'font-size':12});
     label.textContent=`${row.display_name.split(' ')[0]} ${Number(p.accuracy).toFixed(1)}`;svg.append(label);
   });
-  if(!points.length){const empty=svgElement('text',{x:500,y:205,'text-anchor':'middle',class:'chart-axis-label'});empty.textContent='Esperando entregas evaluadas';svg.append(empty);}
+  if(!points.length){const empty=svgElement('text',{x:500,y:205,'text-anchor':'middle',class:'chart-axis-label'});empty.textContent=accuracyLoadError?'Trayectoria temporal no disponible':accuracyData?'Esperando ciclos evaluados':'Cargando trayectorias…';svg.append(empty);}
 }
 
 async function loadAccuracy(board){
   accuracyBoard=board;
+  accuracyData=null;
+  accuracyLoadError=false;
+  drawAccuracy();
+  setText('#accuracy-detail','Cargando trayectorias…');
   try {
     accuracyData=await api('/v1/portal/accuracy-chart');
-    const select=document.querySelector('#accuracy-stage');const previous=select.value;
-    select.replaceChildren();
-    accuracyData.stages.forEach(stage=>{const option=document.createElement('option');option.value=stage.id;option.textContent=stage.label;select.append(option);});
-    select.value=accuracyData.stages.some(s=>s.id===previous)?previous:(accuracyData.stages.at(-1)?.id||'');
-    select.disabled=!accuracyData.stages.length;
-    select.onchange=drawAccuracy;
     document.querySelectorAll('[data-score-mode]').forEach(b=>b.onclick=()=>{scoreMode=b.dataset.scoreMode;drawAccuracy();});
     drawAccuracy();
-  } catch(error){setText('#accuracy-detail','No se pudo cargar el gráfico. Usa Actualizar datos para reintentar.');}
+    setText('#accuracy-detail',accuracyData.stages.length
+      ? 'Selecciona un estudiante o un punto para explorar los resultados.'
+      : 'Esperando ciclos evaluados desde el inicio del corte.');
+  } catch(error){accuracyLoadError=true;drawAccuracy();setText('#accuracy-detail','No se pudo cargar la trayectoria. La clasificación sigue disponible; usa Actualizar datos para reintentar.');}
 }

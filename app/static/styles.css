@@ -383,7 +383,7 @@ input::placeholder { color: #78877f; }
 .legend-dot.is-pending { border-radius: 2px; background: #d8ddd9; }
 .legend-dot.is-live-submitted { border-radius: 50%; background: var(--gold-dark); }
 
-.accuracy-panel, .cutoff-panel { margin-bottom: 1.5rem; }
+.accuracy-panel { margin-bottom: 1.5rem; }
 .accuracy-controls { display:flex; flex-wrap:wrap; gap:.7rem; align-items:center; }
 .accuracy-controls button, .accuracy-controls select { min-height:44px; padding:.6rem .8rem; border:1px solid var(--border); background:var(--surface); color:var(--ink); font:inherit; font-size:.8rem; cursor:pointer; }
 .accuracy-controls button[aria-pressed="true"] { background:var(--forest-700); color:white; }
@@ -393,11 +393,13 @@ input::placeholder { color: #78877f; }
 #accuracy-chart { display:block; width:100%; min-width:680px; }
 #accuracy-chart circle:focus { outline:2px solid var(--gold-dark); }
 .accuracy-detail { margin:0 1.4rem 1rem; padding:.8rem; min-height:3.5rem; background:var(--forest-950); color:white; font-size:.8rem; overflow-wrap:anywhere; }
-.accuracy-legend { display:grid; grid-template-columns:repeat(auto-fit,minmax(145px,1fr)); gap:.35rem; padding:0 1.4rem; }
-.accuracy-person { display:grid; grid-template-columns:32px 1fr; align-items:center; gap:.2rem .5rem; padding:.5rem; border:1px solid transparent; border-left:3px solid var(--runner-color); text-align:left; background:var(--surface); color:var(--ink); cursor:pointer; }
-.accuracy-person .avatar { grid-row:span 2; width:28px; height:28px; }
-.accuracy-person span:not(.avatar) { font-size:.7rem; }
-.accuracy-person small { font-size:.7rem; color:var(--muted); }
+.accuracy-ranking-title { margin:1.5rem 1.4rem .6rem; font-family:var(--font-display); font-size:1.4rem; }
+.accuracy-legend { display:grid; grid-template-columns:1fr; max-height:37rem; gap:.25rem; padding:0 1.4rem; overflow:auto; }
+.accuracy-person { display:grid; grid-template-columns:2rem 2rem minmax(0,1fr) auto; align-items:center; gap:.55rem; min-height:3rem; padding:.45rem .7rem; border:1px solid var(--border); border-left:3px solid var(--runner-color); text-align:left; background:var(--surface); color:var(--ink); cursor:pointer; }
+.accuracy-rank { font-family:var(--font-display); font-size:1.2rem; text-align:center; font-variant-numeric:tabular-nums; }
+.accuracy-person .avatar { width:28px; height:28px; }
+.accuracy-person span:not(.avatar) { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:.82rem; }
+.accuracy-person small { font-family:var(--font-display); font-size:1.2rem; color:var(--ink); font-variant-numeric:tabular-nums; }
 .accuracy-person[aria-pressed="true"] { border-color:var(--runner-color); background:var(--forest-100); }
 @media(max-width:800px){ .accuracy-panel .race-heading {flex-direction:column;align-items:stretch;} }
 .operations-board { padding: 0 1.4rem 1.4rem; }

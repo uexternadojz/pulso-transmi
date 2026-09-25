@@ -30,3 +30,20 @@ def test_stations_are_macro_averaged_and_stages_isolated():
     stages=build_chart(rows)['stages']
     assert stages[0]['cumulative'][0]['accuracy']==50
     assert stages[1]['cumulative'][0]['accuracy']==100
+
+
+def test_later_participant_has_zero_score_before_first_record():
+    first = datetime(2026, 9, 25, tzinfo=timezone.utc)
+    rows = [
+        dict(scenario_id=1, cycle_id='c1', closes_at=first,
+             participant_id='early', station_id='a', error=0, actual=10,
+             targets=1, delivered=1),
+        dict(scenario_id=1, cycle_id='c2', closes_at=first+timedelta(hours=1),
+             participant_id='late', station_id='a', error=0, actual=10,
+             targets=1, delivered=1),
+    ]
+    stage = build_chart(rows)['stages'][0]
+    before_first_record = next(point for point in stage['cumulative']
+                               if point['participant_id']=='late' and point['cycle_id']=='c1')
+    assert before_first_record['accuracy'] == 0
+    assert before_first_record['coverage'] == 0

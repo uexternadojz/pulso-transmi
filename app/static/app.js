@@ -178,17 +178,29 @@ function highlightParticipant(participantId) {
   });
 }
 
+function rankedStudents(rows) {
+  return [...rows].sort((a, b) =>
+    Number(b.accuracy || 0) - Number(a.accuracy || 0)
+    || Number(b.coverage || 0) - Number(a.coverage || 0)
+    || a.display_name.localeCompare(b.display_name, "es"),
+  );
+}
+
 function renderBoard(board) {
   const body = document.querySelector("#leaderboard-body");
   body.replaceChildren();
   let activated = 0;
   let delivered = 0;
 
-  board.data.forEach((row, index) => {
+  rankedStudents(board.data).forEach((row, index) => {
     if (row.api_key_active) activated += 1;
     if (row.has_started || row.submission_status === "accepted") delivered += 1;
     const avatarIndex = row.avatar_index ?? index;
     const tr = document.createElement("tr");
+
+    const rankCell = document.createElement("td");
+    rankCell.textContent = board.resolved_cycles ? String(row.rank || index + 1) : "—";
+    tr.append(rankCell);
 
     const nameCell = document.createElement("td");
     const identity = document.createElement("div");
@@ -199,6 +211,10 @@ function renderBoard(board) {
     identity.append(name);
     nameCell.append(identity);
     tr.append(nameCell);
+
+    const accuracyCell = document.createElement("td");
+    accuracyCell.textContent = board.resolved_cycles ? `${Number(row.accuracy || 0).toFixed(1)}%` : "—";
+    tr.append(accuracyCell);
 
     const sectionCell = document.createElement("td");
     sectionCell.textContent = row.section_code || "—";
@@ -227,7 +243,7 @@ function renderBoard(board) {
     }
   });
 
-  setText("#board-summary", `${activated}/${board.count} API activadas · ${delivered}/${board.count} estudiantes en pista`);
+  setText("#board-summary", `${activated}/${board.count} API activadas · ${delivered}/${board.count} estudiantes en pista · accuracy desde el 25 de septiembre`);
   setText("#cohort-count", board.count);
   setText("#connected-count", board.operations?.active_participants ?? delivered);
   setText("#delivered-count", board.operations?.submissions_total ?? delivered);
@@ -280,11 +296,11 @@ function renderOperationsBoard(board) {
     headerTrack.append(liveLabel);
   }
   const scoreLabel = document.createElement("span");
-  scoreLabel.textContent = "Ritmo";
+  scoreLabel.textContent = "Accuracy";
   cycleHeader.append(headerSpacer, headerTrack, scoreLabel);
 
   list.replaceChildren();
-  board.data.forEach((row, index) => {
+  rankedStudents(board.data).forEach((row, index) => {
     const item = document.createElement("li");
     item.className = "operations-runner";
     if (!row.has_started) item.classList.add("is-waiting");
@@ -296,7 +312,7 @@ function renderOperationsBoard(board) {
     identity.className = "operations-identity";
     const rank = document.createElement("span");
     rank.className = "operations-rank";
-    rank.textContent = row.operations_rank ? String(row.operations_rank).padStart(2, "0") : "—";
+    rank.textContent = board.resolved_cycles ? String(row.rank || index + 1).padStart(2, "0") : "—";
     const names = document.createElement("span");
     names.className = "operations-name";
     const name = document.createElement("strong");
@@ -341,10 +357,10 @@ function renderOperationsBoard(board) {
     const metric = document.createElement("div");
     metric.className = "operations-metric";
     const score = document.createElement("strong");
-    score.textContent = `${row.accepted_cycles_window || 0}/${cycles.length || operations.window_size || 6}`;
+    score.textContent = board.resolved_cycles ? `${Number(row.accuracy || 0).toFixed(1)}%` : "—";
     const detail = document.createElement("span");
     detail.textContent = row.has_started
-      ? `Racha ${row.current_streak} · ${row.accepted_cycles_total} total`
+      ? `${row.accepted_cycles_window || 0}/${cycles.length || operations.window_size || 6} ciclos · racha ${row.current_streak}`
       : (row.api_key_active ? "API activa · esperando envío" : "API pendiente");
     metric.append(score, detail);
     item.append(identity, track, metric);
@@ -643,22 +659,17 @@ function buildDemoData() {
 }
 
 async function loadDashboard({ includeAccuracy = true } = {}) {
-  const payload = DEMO_MODE ? buildDemoData() : {
-    dashboard: await api("/v1/portal/dashboard"),
-    board: await api("/v1/portal/leaderboard"),
-  };
+  let payload;
+  if (DEMO_MODE) {
+    payload = buildDemoData();
+  } else {
+    const [dashboard, board] = await Promise.all([
+      api("/v1/portal/dashboard"), api("/v1/portal/leaderboard"),
+    ]);
+    payload = { dashboard, board };
+  }
   renderDashboard(payload.dashboard);
   renderBoard(payload.board);
-  if (includeAccuracy) await loadAccuracy(payload.board);
-  if (DEMO_MODE) {
-    setText("#cutoff-summary", "El Corte 1 se muestra solo con datos reales del reto.");
-  } else {
-    try {
-      renderFirstCutoff(await api("/v1/portal/first-cutoff"));
-    } catch (_) {
-      setText("#cutoff-summary", "No se pudo cargar el Corte 1. Usa Actualizar datos para reintentar.");
-    }
-  }
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
   loginView.hidden = true;
@@ -666,31 +677,7 @@ async function loadDashboard({ includeAccuracy = true } = {}) {
   dashboardView.hidden = false;
   document.body.classList.add("dashboard-mode");
   activateModule(window.location.hash.slice(1), false);
-}
-
-function renderFirstCutoff(board) {
-  const body = document.querySelector("#cutoff-body");
-  body.replaceChildren();
-  const cycles = Number(board.resolved_cycles || 0);
-  setText("#cutoff-summary", `${cycles} ciclos resueltos desde el corte · actualizado ${formatDate(board.as_of)} · la nota del Proyecto 1 aún no está asignada.`);
-  for (const row of board.data || []) {
-    const tr = document.createElement("tr");
-    const values = [
-      cycles ? String(row.rank) : "—",
-      row.display_name,
-      row.section_code || "—",
-      cycles ? `${Number(row.accuracy).toFixed(1)}%` : "—",
-      cycles ? `${(Number(row.coverage) * 100).toFixed(1)}%` : "—",
-      `${row.delivered_cycles}/${cycles}`,
-      row.last_submission_at ? formatDate(row.last_submission_at) : "Sin entrega en el corte",
-    ];
-    for (const value of values) {
-      const td = document.createElement("td");
-      td.textContent = value;
-      tr.append(td);
-    }
-    body.append(tr);
-  }
+  if (includeAccuracy) void loadAccuracy(payload.board);
 }
 
 document.querySelectorAll("[data-module-target]").forEach((button) => {

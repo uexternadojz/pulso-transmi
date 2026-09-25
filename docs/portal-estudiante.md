@@ -56,8 +56,9 @@ como predicción cero y muestra cobertura y versiones de modelo en el detalle.
 Una persona sin entregas aparece en 0 % cuando hay ciclos resueltos, con
 cobertura 0 %.
 
-Los avatares permiten seleccionar una trayectoria; pulsar de nuevo restaura todas.
-El selector muestra el Corte 1 del escenario oficial. El histórico anterior
+La lista bajo el gráfico ordena a los estudiantes por accuracy, del mayor al
+menor, para la ventana seleccionada. Los avatares permiten seleccionar una
+trayectoria; pulsar de nuevo restaura todas. El histórico anterior
 permanece en la base para auditoría, pero no entra en la carrera ni en el
 ranking acumulado visible. El
 **Corte 1** tiene inicio fijo el 25 de septiembre de
@@ -68,7 +69,9 @@ cobertura y ciclos entregados. Es evidencia para el Proyecto 1, no una nota
 publicada; el peso y la conversión a nota siguen pendientes de definición
 docente. Consulta [Primer corte y evaluación](primer-corte-evaluacion.md).
 El endpoint autenticado es `GET /v1/portal/accuracy-chart`.
-El tablero del corte usa `GET /v1/portal/first-cutoff`.
+La lista operativa y la tabla del módulo Conexión también se ordenan por accuracy
+acumulada. El portal usa `GET /v1/portal/leaderboard` para esas clasificaciones;
+el tablero de corte separado ya no aparece en la interfaz.
 
 Debajo de la carrera se conserva el **Sprint de submissions**, un ranking operativo que
 permite verificar quién ya conectó su pipeline y está entregando de forma

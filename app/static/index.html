@@ -6,9 +6,9 @@
     <meta name="description" content="Portal académico del reto MLOps Pulso TransMi.">
     <title>Pulso TransMi · Portal MLOps</title>
     <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
-    <link rel="stylesheet" href="/assets/styles.css?v=0.7.6">
-    <script src="/assets/accuracy.js?v=0.7.4" defer></script>
-    <script src="/assets/app.js?v=0.7.6" defer></script>
+    <link rel="stylesheet" href="/assets/styles.css?v=0.7.7">
+    <script src="/assets/accuracy.js?v=0.7.7" defer></script>
+    <script src="/assets/app.js?v=0.7.7" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#contenido">Saltar al contenido</a>
@@ -156,39 +156,24 @@
 
             <section class="race-panel accuracy-panel" aria-labelledby="accuracy-heading">
               <div class="race-heading">
-                <div><h3 id="accuracy-heading">La carrera de accuracy · Corte 1</h3><p>Desde el 25 de septiembre a las 00:00 · hora de Bogotá</p></div>
+                <div><h3 id="accuracy-heading">La carrera de accuracy</h3><p>Desde el 25 de septiembre a las 00:00 · hora de Bogotá</p></div>
                 <div class="accuracy-controls">
                   <div role="group" aria-label="Ventana de accuracy"><button type="button" data-score-mode="cumulative" aria-pressed="true">Acumulada</button><button type="button" data-score-mode="rolling6" aria-pressed="false">Últimos 6 ciclos</button></div>
-                  <label>Corte <select id="accuracy-stage"></select></label>
                 </div>
               </div>
               <p id="accuracy-explanation" class="accuracy-explanation"></p>
               <div class="accuracy-scroll"><svg id="accuracy-chart" viewBox="0 0 1100 430" role="img" aria-label="Accuracy por estudiante a través de los ciclos"></svg></div>
-              <p id="accuracy-detail" class="accuracy-detail" role="status">Selecciona un avatar o un punto para explorar los resultados.</p>
-              <div id="accuracy-legend" class="accuracy-legend" aria-label="Estudiantes"></div>
+              <p id="accuracy-detail" class="accuracy-detail" role="status">Cargando trayectorias…</p>
+              <h4 id="accuracy-ranking-title" class="accuracy-ranking-title">Clasificación acumulada</h4>
+              <div id="accuracy-legend" class="accuracy-legend" aria-label="Clasificación de estudiantes"></div>
               <p class="accuracy-explanation">Accuracy por estación (WAPE) sobre los ciclos resueltos del Corte 1. Las ausencias cuentan como predicción cero y se muestran con 0 % de cobertura. Los ciclos anteriores al corte no se incluyen.</p>
-            </section>
-
-            <section class="race-panel cutoff-panel" aria-labelledby="cutoff-heading">
-              <div class="race-heading">
-                <div>
-                  <h3 id="cutoff-heading">Corte 1 · leaderboard desde el 25 de septiembre</h3>
-                  <p>Desde las 00:00, hora de Bogotá · solo ciclos resueltos · actualización en vivo</p>
-                </div>
-              </div>
-              <p id="cutoff-summary" class="accuracy-explanation">Cargando el primer corte…</p>
-              <div class="table-wrap"><table>
-                <thead><tr><th scope="col">Posición</th><th scope="col">Estudiante</th><th scope="col">Grupo</th><th scope="col">Accuracy</th><th scope="col">Cobertura</th><th scope="col">Ciclos entregados</th><th scope="col">Última entrega</th></tr></thead>
-                <tbody id="cutoff-body"></tbody>
-              </table></div>
-              <p class="accuracy-explanation">Las ausencias cuentan como predicción cero. Este tablero aporta evidencia para evaluar el Proyecto 1; no publica notas oficiales. Accuracy y cobertura se calculan sobre los mismos ciclos resueltos desde el corte.</p>
             </section>
 
             <section class="race-panel" aria-labelledby="race-title">
               <div class="race-heading">
                 <div>
-                  <h3 id="race-title">Benchmark operativo de modelos</h3>
-                  <p>Una fila por estudiante, seis ciclos cerrados y el ciclo en curso cuando exista. Pasa el cursor o enfoca un punto para ver el estado.</p>
+                  <h3 id="race-title">Sprint de submissions</h3>
+                  <p>Ordenado por accuracy acumulada. Cada fila muestra los seis ciclos cerrados más recientes y el ciclo en curso.</p>
                 </div>
                 <div class="race-legend" aria-label="Leyenda">
                   <span><i class="legend-dot is-complete" aria-hidden="true"></i>Entregado</span>
@@ -294,9 +279,9 @@
 python examples/first_prediction.py</code></pre>
             </section>
             <section class="board-section" aria-labelledby="board-title">
-              <div class="section-heading"><h3 id="board-title">Estado operativo de la cohorte</h3><p id="board-summary" class="muted"></p></div>
+              <div class="section-heading"><h3 id="board-title">Clasificación de la cohorte</h3><p id="board-summary" class="muted"></p></div>
               <div class="table-wrap"><table>
-                <thead><tr><th scope="col">Estudiante</th><th scope="col">Grupo</th><th scope="col">API</th><th scope="col">Entrega</th><th scope="col">Predicciones</th><th scope="col">Última actividad</th></tr></thead>
+                <thead><tr><th scope="col">Posición</th><th scope="col">Estudiante</th><th scope="col">Accuracy</th><th scope="col">Grupo</th><th scope="col">API</th><th scope="col">Entrega</th><th scope="col">Predicciones</th><th scope="col">Última actividad</th></tr></thead>
                 <tbody id="leaderboard-body"></tbody>
               </table></div>
             </section>
