@@ -10,16 +10,18 @@ Esta bitácora separa trabajo terminado, trabajo en curso y diseño planificado.
 actualiza cuando cambia el estado operativo; una idea documentada no equivale a
 una funcionalidad disponible.
 
-## Trabajo en curso · 25 de septiembre
+## Corte 1 desplegado · 25 de septiembre
 
 El Corte 1 quedó definido con inicio fijo el 24 de septiembre a las 00:00
-Bogotá. Se implementó en el repositorio un leaderboard separado basado en
-ciclos oficiales resueltos, con ausencias reflejadas en el score y cobertura
-visible. La definición académica y la distinción frente a la nota oficial están
-en [Primer corte y evaluación](primer-corte-evaluacion.md). Pendiente: verificar
-el despliegue público, fijar el fin del corte y aprobar el criterio de conversión
-a nota antes de escribir calificaciones. Julián prevé iniciar drift la noche
-del 25 de septiembre; aún no se ha cambiado el escenario por esta decisión.
+Bogotá. La carrera acumulada, el ranking del Corte 1 y los totales operativos
+visibles arrancan en ese instante; los ciclos previos permanecen para auditoría.
+La API quedó desplegada y se verificó por el portal público con 36 ciclos
+resueltos y 32 estudiantes; la accuracy final de la carrera coincidió con la del
+leaderboard en las 32 filas. La definición académica y la distinción frente a
+la nota oficial están en [Primer corte y evaluación](primer-corte-evaluacion.md).
+Pendiente: fijar el fin del corte y aprobar el criterio de conversión a nota
+antes de escribir calificaciones. Julián prevé iniciar drift la noche del 25 de
+septiembre; aún no se ha cambiado el escenario por esta decisión.
 
 ## Resumen del corte
 
