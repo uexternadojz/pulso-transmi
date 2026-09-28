@@ -4,15 +4,16 @@ Fecha de diseño: 28 de septiembre de 2026.
 
 ## Alcance y estado verificable
 
-Implementado en esta preparación: esquema de plan estricto, niveles 0–3,
-encadenamiento de revisiones con SHA-256, validación de frontera temporal,
-preview sin escrituras y pruebas unitarias. Entrada: `python -m app.drift_plan`.
+Actualización 0.8.0: implementados validador de planes, importación transaccional
+por tramos, archivo inmutable de revisiones, frontera protegida, continuación,
+cierre real con drenaje y observatorio docente. El generador reconstruido y su
+calibración permanecen en el entorno privado. Procedimiento ejecutable en
+[Operación de drift](drift-operations.md).
 
-Pendiente de implementación y validación: reconstrucción del generador privado,
-perfiles calibrados, persistencia de revisiones, compilación incremental,
-activación transaccional, extensión del escenario, control docente y diagnóstico
-de recuperación. El preview NO calibra ni activa un escenario. No existe todavía
-un controlador automático que modifique la dificultad en producción.
+La CLI `app.drift_plan` sigue siendo solo preview. La activación utiliza
+`app.drift_admin` con bundle calibrado y verificación del reloj en la BD.
+La sección de diseño conserva decisiones y gates; no se ha implementado una
+escalada automática ni un botón de edición en el portal.
 
 ## Decisión arquitectónica
 
@@ -101,7 +102,7 @@ un procedimiento de incidente explícito; no una actualización silenciosa.
 Propuesta de persistencia: `sim.drift_plan_revisions` (contenido y cadena),
 `sim.generation_segments` (rangos, checkpoint y hashes), asociación de ciclo a
 segmento/revisión y `ops.audit_events` para cada transición administrativa.
-Son entidades propuestas; esta preparación no instala migraciones.
+La migración 010 implementa revisiones con el artefacto completo y la asociación de ciclos. No se creó una tabla separada de segmentos: los tramos están contenidos en cada revisión.
 
 El futuro de ensayo vive en staging. Al reemplazar un tramo todavía editable se
 marca su versión como sustituida; el manifiesto selecciona una única generación

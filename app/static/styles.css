@@ -649,3 +649,11 @@ footer a { color: white; }
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   .loading-bus { left: 33%; animation: none !important; }
 }
+
+.drift-monitor { padding: 1.2rem; margin-bottom: 1.5rem; background: #fff; border: 1px solid #cbd6cc; border-top: 4px solid #c8a951; }
+.drift-monitor h2 { margin: 0 0 .75rem; }
+.drift-monitor details { margin-top: .8rem; }
+.drift-monitor summary { cursor: pointer; font-weight: 600; }
+.drift-table-scroll { overflow-x: auto; }
+.drift-monitor table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+.drift-monitor td, .drift-monitor th { text-align: left; padding: .6rem; border-bottom: 1px solid #e2e7e1; white-space: nowrap; }

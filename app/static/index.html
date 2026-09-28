@@ -130,9 +130,19 @@
             </div>
           </header>
 
+          <p id="drift-phase-notice" class="message" hidden></p>
           <div id="global-message" class="message" role="status" aria-live="polite" hidden></div>
 
           <section class="portal-module is-active" data-module="home" aria-labelledby="home-title" tabindex="-1">
+            <section id="drift-monitor" class="drift-monitor" hidden aria-labelledby="drift-monitor-title">
+              <h2 id="drift-monitor-title">Observatorio de drift · Docente</h2>
+              <p id="drift-summary" role="status">Consultando resultados…</p>
+              <p id="drift-alerts"></p>
+              <details><summary>Desempeño de la fase por estudiante</summary>
+                <div class="drift-table-scroll"><table><thead><tr><th>Estudiante</th><th>Antes de la fase</th><th>Fase</th><th>Últimos 6</th><th>Cambio comparable</th><th>Cobertura reciente</th><th>Entregas fase</th></tr></thead><tbody id="drift-students"></tbody></table></div>
+              </details>
+              <details><summary>Revisiones de dificultad</summary><ul id="drift-revisions"></ul></details>
+            </section>
             <div class="phase-hero operations-hero">
               <div>
                 <span id="race-mode-label" class="phase-chip">Benchmark de la cohorte</span>

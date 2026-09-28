@@ -124,10 +124,16 @@ async def open_cycle(
         """
         insert into competition.forecast_cycles
             (public_id,scenario_id,origin_at,data_cutoff,opens_at,closes_at,
-             target_start_at,target_end_at,state)
-        values ($1,$2,$3::timestamptz,$3::timestamptz,now(),now()+$4::interval,
+             target_start_at,target_end_at,state,drift_revision_id)
+        select $1,$2,$3::timestamptz,$3::timestamptz,now(),now()+$4::interval,
                 $3::timestamptz+interval '15 minutes',
-                $3::timestamptz+interval '60 minutes','open')
+                $3::timestamptz+interval '60 minutes','open',
+                (select id from sim.drift_revisions where scenario_id=$2
+                   and effective_from<=$3 and ends_at>$3 order by revision desc limit 1)
+        where not exists(select 1 from competition.drift_windows where scenario_id=$2
+                         and now()+interval '65 minutes'>ends_at_wall)
+          and (select count(*) from sim.generated_truth where scenario_id=$2
+               and observed_at>$3 and observed_at<=$3::timestamptz+interval '60 minutes')=48
         on conflict (scenario_id,origin_at) do nothing
         returning id
         """,
@@ -290,11 +296,29 @@ async def tick_scenario(
     if clock["last_tick_at"] is not None and clock["database_now"] < clock["last_tick_at"] + timedelta(minutes=release_interval_minutes):
         return None
 
+    # Re-read under the advisory lock: an administrator may have extended the scenario.
+    scenario = dict(scenario)
+    scenario["competition_end"] = await connection.fetchval(
+        "select competition_end from sim.scenarios where id=$1", scenario["scenario_id"])
+    deadline = await connection.fetchval(
+        "select ends_at_wall from competition.drift_windows where scenario_id=$1", scenario["scenario_id"])
+    deadline_reached = deadline is not None and clock["database_now"] >= deadline
     previous_virtual_now = clock["virtual_now"]
     virtual_now = min(
         previous_virtual_now + timedelta(minutes=release_interval_minutes),
         scenario["competition_end"],
     )
+    if deadline_reached:
+        last_target = await connection.fetchval(
+            "select max(target_end_at) from competition.forecast_cycles where scenario_id=$1",
+            scenario["scenario_id"])
+        virtual_now = min(virtual_now, max(previous_virtual_now, last_target or previous_virtual_now))
+    expected = int((virtual_now-previous_virtual_now).total_seconds()/900)*12
+    available = await connection.fetchval(
+        "select count(*) from sim.generated_truth where scenario_id=$1 and observed_at>$2 and observed_at<=$3",
+        scenario["scenario_id"], previous_virtual_now, virtual_now)
+    if available != expected:
+        raise RuntimeError("Generation grid incomplete; tick rolled back without new commitments")
     await close_expired_cycles(connection, scenario["scenario_id"])
     released = await release_observations(
         connection,
@@ -328,7 +352,7 @@ async def tick_scenario(
             "rolling_24h",
             max(scenario["competition_start"], virtual_now - timedelta(hours=24)),
         )
-    state = "completed" if virtual_now >= scenario["competition_end"] else "running"
+    state = "completed" if virtual_now >= scenario["competition_end"] or (deadline_reached and virtual_now >= (last_target or previous_virtual_now)) else "running"
     await connection.execute(
         """
         update competition.scenario_clock

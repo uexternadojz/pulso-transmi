@@ -14,13 +14,14 @@ una funcionalidad disponible.
 
 Actualización del 28 de septiembre: el reloj original terminó a las 10:50 Bogotá
 tras 168 ciclos; 82 pertenecen al corte vigente. El servicio siguió disponible.
-La continuación hasta el viernes 2 de octubre requiere extensión y activación;
-la hora final está pendiente. No atribuir nuevas ausencias al intervalo sin ciclos.
+La versión 0.8.0 implementa la continuación con cierre real configurable al
+viernes 2 de octubre, 23:59 Bogotá. No atribuir nuevas ausencias al intervalo sin ciclos.
 
 Se preparó el [contrato de drift versionado](drift-control.md), la
 [guía estudiantil](fase-drift.md) y un validador/preview ejecutable con niveles
-0–3 y cadena de revisiones. No se ha implementado ni desplegado el control de
-generación incremental. Los gates de activación se enumeran en el contrato.
+0–3 y cadena de revisiones. La versión 0.8.0 añade importación transaccional, artefactos privados versionados,
+protección del histórico, cierre con drenaje y observatorio. La operación y los
+gates de activación están en [drift-operations.md](drift-operations.md).
 
 Corrección de contexto: el bundle original sí incluía drift precalculado de
 picos, redistribución y clima. La decisión docente posterior no había activado

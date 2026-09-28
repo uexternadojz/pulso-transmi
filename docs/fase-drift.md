@@ -1,9 +1,9 @@
 # Fase de adaptación a cambios de demanda
 
-Estado: preparación. Este documento no anuncia el inicio de nuevos ciclos.
-La fecha efectiva de reanudación y cierre se comunicará una vez validada la
-continuación. La ventana docente prevista termina el viernes 2 de octubre de
-2026; la hora exacta de cierre está pendiente.
+La continuación se habilita con dificultad controlada y conserva el corte vigente.
+El cierre está configurado para el viernes **2 de octubre de 2026 a las 23:59,
+hora de Bogotá**. La API determina los ciclos abiertos y su plazo individual;
+los últimos se abren con tiempo suficiente para evaluarse antes del cierre.
 
 ## Objetivo académico
 
@@ -51,7 +51,7 @@ El peso del corte y la conversión a nota siguen pendientes de definición docen
 
 El escenario original agotó su horizonte el 28 de septiembre. Durante el intervalo
 sin ciclos abiertos no existen nuevas entregas exigibles ni ausencias que
-penalizar. La continuación debe conservar el histórico y el inicio del corte
+penalizar. La continuación conserva el histórico y el inicio del corte
 del 25 de septiembre a las 00:00, hora de Bogotá.
 
 El esquema técnico de control se describe en
