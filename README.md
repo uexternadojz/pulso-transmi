@@ -26,6 +26,13 @@ La matrícula activa ya está precargada: 32 estudiantes (20 del grupo A y 12 de
 grupo B). Cada persona debe activar su propia API key y realizar una entrega
 individual; el repositorio no contiene correos ni documentos del curso.
 
+> **Fase de drift configurable — 0.8.0:** continuación versionada con niveles
+> de dificultad, protección de targets comprometidos y observatorio docente.
+> El cierre de la ventana se configura para el viernes 2 de octubre a las 23:59
+> Bogotá. El estado vigente y los ciclos disponibles se consultan en el portal.
+> [Guía para estudiantes](docs/fase-drift.md) ·
+> [Contrato técnico](docs/drift-control.md) · [Operación](docs/drift-operations.md).
+
 ## Qué se aprende
 
 El objetivo no es obtener una buena predicción una sola vez. Cada estudiante debe
@@ -95,7 +102,7 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.7.1`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.8.0`) |
 | Portal web | Carrera de accuracy, benchmark completo, API key, rotación y recibos | Sesión estudiantil |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |
@@ -129,7 +136,7 @@ El ejemplo combina el histórico con el stream incremental, entrena un Random
 Forest con variables temporales y rezagos, descubre los targets abiertos y envía la predicción. La
 guía completa está en [Primera predicción](docs/primera-prediccion.md).
 
-## API pública `0.7.1`
+## API pública `0.8.0`
 
 La API pública está en `https://pulso-transmi.72-60-245-2.sslip.io`; Swagger se
 encuentra en `/docs`. En el VPS el proceso escucha únicamente en

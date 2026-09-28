@@ -30,6 +30,7 @@ from app.portal import (
 from app.settings import get_settings
 from app.chart import accuracy_chart
 from app.cutoff import first_cutoff_board
+from app.drift_monitor import monitor as drift_monitor
 from app.starter_store import InvalidCursor, StarterStore
 
 
@@ -57,7 +58,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.7.1",
+    version="0.8.0",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )
@@ -616,3 +617,8 @@ async def leaderboard(
 
 
 app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="portal-assets")
+
+
+@app.get("/v1/portal/drift-monitor", include_in_schema=False)
+async def portal_drift_monitor(request: Request, identity: PortalIdentity = Depends(portal_participant)):
+    return await drift_monitor(pool(request), identity)

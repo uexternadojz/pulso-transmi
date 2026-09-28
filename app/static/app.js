@@ -134,6 +134,10 @@ function avatarNode(index, label, extraClass = "") {
 
 function renderDashboard(data) {
   const participant = data.participant;
+  const notice = document.querySelector("#drift-phase-notice");
+  notice.hidden = !data.drift_phase;
+  if (data.drift_phase) notice.textContent = `Fase de adaptación · ${data.drift_phase.state === "running" ? "Activa" : "Finalizada o en pausa"} · Cierre ${formatDate(data.drift_phase.ends_at_wall)} (Bogotá). El corte acumulado se conserva.`;
+  document.querySelector("#drift-monitor").hidden = participant.kind !== "admin";
   currentParticipantId = participant.participant_id || participant.public_id || participant.id;
   const preferredName = participant.preferred_name || participant.display_name;
   setText("#student-meta", `${preferredName} · ${participant.section || "Grupo único"}`);
@@ -678,6 +682,7 @@ async function loadDashboard({ includeAccuracy = true } = {}) {
   document.body.classList.add("dashboard-mode");
   activateModule(window.location.hash.slice(1), false);
   if (includeAccuracy) void loadAccuracy(payload.board);
+  if (!DEMO_MODE && payload.dashboard.participant.kind === "admin") void loadDriftMonitor();
 }
 
 document.querySelectorAll("[data-module-target]").forEach((button) => {
@@ -826,3 +831,29 @@ setInterval(async () => {
     automaticRefreshInFlight = false;
   }
 }, 90_000);
+
+
+async function loadDriftMonitor() {
+  try {
+    const data = await api("/v1/portal/drift-monitor");
+    if (!data.window) { setText("#drift-summary", data.message); return; }
+    const w = data.window;
+    setText("#drift-summary", `${data.active ? "Activa" : "Finalizada o en pausa"} · Nivel ${w.effective_level ?? w.level}${w.effective_level != null && w.level !== w.effective_level ? ` (programado: ${w.level})` : ""} · Revisión ${w.revision} · ${data.cycles.resolved} ciclos evaluados · ${data.cycles.awaiting_resolution} pendientes de evaluación · Consulta ${formatDate(w.as_of)}`);
+    setText("#drift-alerts", data.alerts.length ? data.alerts.join(" · ") : "Sin alertas operativas. La dificultad se ajusta mediante una nueva revisión administrativa.");
+    const body = document.querySelector("#drift-students"); body.replaceChildren();
+    const pct = value => value == null ? "Pendiente" : `${Number(value).toFixed(1)} %`;
+    for (const row of data.students) {
+      const tr = document.createElement("tr");
+      for (const value of [row.display_name,pct(row.before_accuracy),pct(row.accuracy),pct(row.last6_accuracy),row.change_points == null ? "No comparable aún" : `${row.change_points > 0 ? "+" : ""}${row.change_points.toFixed(1)} pp`,pct(row.last6_coverage),`${row.delivered_cycles}/${data.cycles.resolved}`]) {
+        const td = document.createElement("td"); td.textContent = value; tr.append(td);
+      }
+      body.append(tr);
+    }
+    const revisions = document.querySelector("#drift-revisions"); revisions.replaceChildren();
+    for (const row of data.revisions) {
+      const li = document.createElement("li");
+      li.textContent = `Revisión ${row.revision} · nivel ${row.level} · registrada ${formatDate(row.activated_at)} · ${row.bundle_sha256.slice(0,12)}`;
+      revisions.append(li);
+    }
+  } catch (error) { setText("#drift-summary", "No se pudo consultar el observatorio. Reintenta con Actualizar datos."); }
+}

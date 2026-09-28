@@ -75,7 +75,7 @@ async def login(
             """
             select id, public_id, display_name, cohort_code, section_code
             from competition.participants
-            where kind='student'
+            where kind in ('student','admin')
               and login_email_hash=$1
               and login_student_code_hash=$2
             """,
@@ -313,6 +313,10 @@ async def rotate_api_key(
 
 async def dashboard(pool: asyncpg.Pool, identity: PortalIdentity) -> dict[str, object]:
     async with pool.acquire() as connection:
+        kind = await connection.fetchval("select kind from competition.participants where id=$1", identity.participant_id)
+        drift = await connection.fetchrow("""select w.started_at,w.ends_at_wall,c.state
+            from competition.drift_windows w join competition.scenario_clock c on c.scenario_id=w.scenario_id
+            order by w.started_at desc limit 1""")
         key = await connection.fetchrow(
             """
             select key_prefix, created_at, last_used_at
@@ -350,11 +354,13 @@ async def dashboard(pool: asyncpg.Pool, identity: PortalIdentity) -> dict[str, o
     return {
         "participant": {
             "participant_id": identity.public_id,
+            "kind": kind,
             "display_name": identity.display_name,
             "preferred_name": identity.preferred_name,
             "cohort": identity.cohort_code,
             "section": identity.section_code,
         },
+        "drift_phase": dict(drift) if drift else None,
         "api_key": dict(key) if key else None,
         "cycle": dict(cycle) if cycle else None,
         "submissions": [dict(row) for row in submissions],
