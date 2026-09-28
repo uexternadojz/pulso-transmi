@@ -96,5 +96,5 @@ async function loadAccuracy(board){
     setText('#accuracy-detail',accuracyData.stages.length
       ? 'Selecciona un estudiante o un punto para explorar los resultados.'
       : 'Esperando ciclos evaluados desde el inicio del corte.');
-  } catch(error){accuracyLoadError=true;drawAccuracy();setText('#accuracy-detail','No se pudo cargar la trayectoria. La clasificación sigue disponible; usa Actualizar datos para reintentar.');}
+  } catch(error){console.error("Accuracy trajectory:", error);accuracyLoadError=true;drawAccuracy();setText('#accuracy-detail','No se pudo cargar la trayectoria. La clasificación sigue disponible; usa Actualizar datos para reintentar.');}
 }

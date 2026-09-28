@@ -10,6 +10,27 @@ Esta bitácora separa trabajo terminado, trabajo en curso y diseño planificado.
 actualiza cuando cambia el estado operativo; una idea documentada no equivale a
 una funcionalidad disponible.
 
+## Ventana de drift activa · 28 de septiembre
+
+Activada en producción a las **16:35:41 de Bogotá** con versión 0.8.0,
+revisión 1, nivel 1. Cierra el **2 de octubre de 2026 a las 23:59 Bogotá**.
+El servicio acepta submissions de la continuación y el observatorio docente
+muestra estado, cobertura, accuracy de la fase, últimos seis ciclos y comparación
+con la referencia previa. La dificultad se modifica con revisiones auditadas.
+
+Evidencia de activación: `/ready` correcto; reloj en ejecución; 52 pruebas
+unitarias aprobadas; integración sobre una restauración aislada con validación
+de permisos, idempotencia, protección de targets y cierre con drenaje. Se
+compararon huellas del histórico antes/después sin cambios. Se verificaron en
+Chrome el acceso docente, la trayectoria y nuevas entregas recibidas. Hay backup
+previo y copia privada versionada del generador y su calibración.
+
+El monitor programado revisa cada cuatro horas hasta el cierre y comunica
+incidentes o cambios que requieren decisión. No ajusta dificultad por sí solo.
+La primera comparación de rendimiento requiere seis ciclos nuevos resueltos y
+cobertura suficiente. La guía pública describe el reto sin entregar modelos,
+semillas ni objetivos futuros. El acumulado conserva el corte del 25 de septiembre.
+
 ## Corte 1 desplegado · 25 de septiembre
 
 Actualización del 28 de septiembre: el reloj original terminó a las 10:50 Bogotá
