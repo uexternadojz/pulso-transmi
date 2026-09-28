@@ -1,7 +1,7 @@
 ---
 title: Progreso de Pulso TransMi
 description: Estado verificable, decisiones vigentes, pendientes y criterios de salida del proyecto.
-updated_at: 2026-09-25
+updated_at: 2026-09-28
 ---
 
 # Progreso del proyecto
@@ -11,6 +11,20 @@ actualiza cuando cambia el estado operativo; una idea documentada no equivale a
 una funcionalidad disponible.
 
 ## Corte 1 desplegado · 25 de septiembre
+
+Actualización del 28 de septiembre: el reloj original terminó a las 10:50 Bogotá
+tras 168 ciclos; 82 pertenecen al corte vigente. El servicio siguió disponible.
+La continuación hasta el viernes 2 de octubre requiere extensión y activación;
+la hora final está pendiente. No atribuir nuevas ausencias al intervalo sin ciclos.
+
+Se preparó el [contrato de drift versionado](drift-control.md), la
+[guía estudiantil](fase-drift.md) y un validador/preview ejecutable con niveles
+0–3 y cadena de revisiones. No se ha implementado ni desplegado el control de
+generación incremental. Los gates de activación se enumeran en el contrato.
+
+Corrección de contexto: el bundle original sí incluía drift precalculado de
+picos, redistribución y clima. La decisión docente posterior no había activado
+una intervención adicional. Los parámetros privados permanecen fuera de Git.
 
 El Corte 1 quedó definido con inicio fijo el 25 de septiembre a las 00:00
 Bogotá. La carrera acumulada, el ranking del Corte 1 y los totales operativos

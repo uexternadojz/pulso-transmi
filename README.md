@@ -26,6 +26,13 @@ La matrícula activa ya está precargada: 32 estudiantes (20 del grupo A y 12 de
 grupo B). Cada persona debe activar su propia API key y realizar una entrega
 individual; el repositorio no contiene correos ni documentos del curso.
 
+> **Preparación de fase de drift — 28 de septiembre:** el escenario original
+> agotó su horizonte. Se prepara una continuación con dificultad configurable y
+> revisiones auditables. El validador de planes ya permite revisar propuestas;
+> esta preparación no activa nuevos ciclos. Consulta la
+> [guía de la fase](docs/fase-drift.md) y el
+> [contrato de control](docs/drift-control.md) para conocer alcance y pendientes.
+
 ## Qué se aprende
 
 El objetivo no es obtener una buena predicción una sola vez. Cada estudiante debe

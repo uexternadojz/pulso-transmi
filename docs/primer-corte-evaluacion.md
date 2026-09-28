@@ -51,8 +51,11 @@ penalización individual; el listado técnico de participantes no decide eso.
 
 ## Relación con drift
 
-Julián prevé comenzar la fase de drift la noche del 25 de septiembre. El Corte 1
-conserva su inicio aunque cambie el régimen de datos. El escenario oficial usa
+El Corte 1 conserva su inicio aunque cambie el régimen de datos. El escenario
+original ya incluía drift precalculado. La intervención adicional planteada el
+25 de septiembre no se activó por esa decisión; el 28 de septiembre se preparó
+el [contrato de control versionado](drift-control.md) para una continuación.
+El escenario oficial usa
 un bundle de futuro precomputado y congelado: activar o cambiar drift requiere
 documentar el evento y su hora efectiva, validar el mecanismo vigente y preservar
 la auditabilidad de los ciclos anteriores. No se reescribe ground truth ni se

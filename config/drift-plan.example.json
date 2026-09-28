@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "plan_id": "example-drift-plan",
+  "revision": 1,
+  "scenario_code": "example-scenario",
+  "profile_version": "example-v1",
+  "starts_at_virtual": "2030-01-01T00:00:00Z",
+  "phases": [
+    {"phase_id": "adaptation", "level": 1, "duration_hours": 24, "transition_hours": 6},
+    {"phase_id": "consolidation", "level": 1, "duration_hours": 24, "transition_hours": 0}
+  ],
+  "reason": "Illustrative plan only; this is not the official schedule or private profile."
+}
