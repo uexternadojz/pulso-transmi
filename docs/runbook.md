@@ -84,6 +84,18 @@ e idempotencia; la `004` agrega identidad firmada y sesiones del portal, y la
 `005` limita el login a correo + documento y guarda el nombre preferido únicamente
 en la sesión; `006` agrega la asignación validada y única de avatar por cohorte.
 
+Para la carrera de accuracy optimizada, aplicar `011` después de `009` y `010`:
+
+```bash
+sudo docker compose exec -T postgres sh -lc \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < database/migrations/011_accuracy_components_cutoff.sql
+```
+
+La vista nueva permite al rol de la API leer solo componentes de ciclos oficiales
+resueltos desde el Corte 1. Confirmar su registro en `ops.schema_migrations`
+antes de reiniciar la API que consulta el gráfico.
+
 ## Ronda de práctica e importación de matrícula
 
 La ronda inicial no arranca el reloj ni materializa futuro sintético:

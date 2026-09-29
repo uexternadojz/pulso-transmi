@@ -47,3 +47,27 @@ def test_later_participant_has_zero_score_before_first_record():
                                if point['participant_id']=='late' and point['cycle_id']=='c1')
     assert before_first_record['accuracy'] == 0
     assert before_first_record['coverage'] == 0
+
+
+def test_rolling_window_drops_old_scores_and_model_versions():
+    first = datetime(2026, 9, 25, tzinfo=timezone.utc)
+    rows = [
+        dict(scenario_id=1, cycle_id=f'c{i}', closes_at=first+timedelta(hours=i),
+             participant_id='student', station_id='a',
+             error=100 if i == 0 else 0, actual=100, targets=4,
+             delivered=0 if i == 0 else 4,
+             model_versions=['old'] if i == 0 else ['new'])
+        for i in range(7)
+    ]
+    stage = build_chart(rows)['stages'][0]
+    cumulative = stage['cumulative'][-1]
+    rolling = stage['rolling6'][-1]
+    assert abs(cumulative['accuracy'] - 600 / 7) < 1e-8
+    assert cumulative['coverage'] == 6 / 7
+    assert cumulative['delivered_cycles'] == 6
+    assert cumulative['model_versions'] == ['new', 'old']
+    assert rolling['accuracy'] == 100
+    assert rolling['coverage'] == 1
+    assert rolling['window_cycles'] == 6
+    assert rolling['delivered_cycles'] == 6
+    assert rolling['model_versions'] == ['new']
