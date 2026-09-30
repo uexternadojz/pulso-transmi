@@ -97,3 +97,31 @@ entregas nuevas: investigar y corregir con una continuación válida.
 La pausa administrativa antigua no es una pausa de drenaje; no emplearla para
 interrumpir ciclos comprometidos. Esta versión implementa drenaje para el cierre
 real de la ventana, no un botón general de pausa docente.
+
+## Revisión 2 · 30 de septiembre de 2026
+
+Por decisión docente se activó la revisión 2, nivel 3, con una fase más intensa
+de concept drift. Incluye una transición de seis horas virtuales y observación durante las próximas 48 horas
+reales. La activación quedó registrada a las 14:52, hora de Bogotá; los nuevos
+valores comienzan tras los targets previamente comprometidos. Se conserva el cierre del viernes 2 de octubre a las 23:59, hora de Bogotá.
+El nuevo régimen permanece estable después de la transición, para permitir que
+los participantes aprendan de las observaciones que se van revelando.
+
+La continuación privada `private-continuation-v1.1.0` modifica la forma temporal
+de la demanda. Su calibración utiliza pronósticos causales de cuatro horizontes:
+un Random Forest fijo con variables recientes y la misma familia de modelo
+reentrenada periódicamente. En las primeras 48 horas simuladas, excluyendo las
+primeras 18 de adaptación, las referencias obtienen **71,5 %** y **86,8 %**,
+respectivamente. En todo el sufijo evaluado obtienen **71,5 %** y **88,0 %**.
+Son resultados de referencias privadas; no predicen las notas de los estudiantes.
+
+La antigua referencia adaptativa que solo ajustaba la escala del perfil deja de
+ser apropiada para este cambio de forma. Su resultado fallido se conserva en la
+evidencia privada, junto con el nuevo ensayo; no se reduce el piso de 70 % ni la
+separación mínima de tres puntos exigida para aceptar una continuación.
+
+El seguimiento debe separar accuracy y cobertura, observar primero los últimos
+seis ciclos y distinguir transición de recuperación. El acumulado desde el corte
+seguirá cambiando más lentamente. La revisión conserva el histórico y comienza
+en la frontera de los targets ya comprometidos. Los parámetros, scripts y
+respuestas futuras permanecen exclusivamente en el entorno privado.
