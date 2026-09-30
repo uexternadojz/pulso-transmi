@@ -125,3 +125,31 @@ seis ciclos y distinguir transición de recuperación. El acumulado desde el cor
 seguirá cambiando más lentamente. La revisión conserva el histórico y comienza
 en la frontera de los targets ya comprometidos. Los parámetros, scripts y
 respuestas futuras permanecen exclusivamente en el entorno privado.
+
+## Revisión 3 · 30 de septiembre de 2026
+
+Por solicitud docente se activó una continuación considerablemente más exigente,
+`private-continuation-v1.2.0`, con transición de dos horas virtuales. Comienza en
+la primera frontera no comprometida; conserva el cierre real del 2 de octubre a
+las 23:59 de Bogotá. La revisión 2 permanece en el historial de auditoría.
+
+Se calibró causalmente con dos familias de referencia, incluyendo las primeras
+horas de transición en la ventana completa de 48 horas:
+
+| Referencia | Fija con variables recientes | Adaptativa |
+|---|---:|---:|
+| Random Forest | 55,0 % | 80,3 % |
+| Extra Trees | 55,6 % | 79,4 % |
+
+Entre las horas 18 y 30, ambas referencias adaptativas recuperan cerca del 84 %.
+Las primeras seis horas son más difíciles: aproximadamente 55–56 % para las
+adaptativas. Estos ensayos no garantizan resultados individuales. El régimen
+permanece estable después de la transición para permitir recuperación; no se
+programó una segunda subida sin calibración.
+
+El artefacto conserva la cadena de revisiones, la evidencia por ventanas y los
+hashes del generador y evaluadores. Se verificó reconstrucción determinista,
+contrato de grilla, límites y calibración, además de las pruebas del importador.
+Los parámetros exactos y el código generador siguen en el almacenamiento privado.
+Para medir el efecto, usar ciclos de la revisión 3 y distinguir transición,
+recuperación y cobertura; el acumulado histórico conserva su corte habitual.
