@@ -17,6 +17,8 @@ async def first_cutoff_board(
     async with pool.acquire() as connection, connection.transaction(
         isolation="repeatable_read", readonly=True
     ):
+        await connection.execute("set local work_mem = '32MB'")
+        await connection.execute("set local max_parallel_workers_per_gather = 0")
         as_of = await connection.fetchval("select transaction_timestamp()")
         scenario = await connection.fetchrow(
             """
@@ -53,11 +55,12 @@ async def first_cutoff_board(
               where scenario_id=$1 and state='resolved' and opens_at >= $3
             ), station_scores as (
               select sc.participant_id, sc.station_id,
-                     sum(sc.error) as absolute_error, sum(sc.actual) as actual_value,
-                     sum(sc.targets) as expected_targets,
-                     sum(sc.delivered) as delivered_targets
-              from competition.accuracy_cycle_station sc
-              join cycles c on c.public_id=sc.cycle_id
+                     sum(sc.absolute_error) as absolute_error, sum(sc.actual_value) as actual_value,
+                     count(*) as expected_targets,
+                     count(*) filter (where not sc.was_missing) as delivered_targets
+              from competition.accuracy_components_cutoff sc
+              join cycles c on c.id=sc.cycle_id
+              join eligible e on e.id=sc.participant_id
               group by sc.participant_id, sc.station_id
             ), scores as (
               select participant_id,

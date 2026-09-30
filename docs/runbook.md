@@ -96,6 +96,28 @@ La vista nueva permite al rol de la API leer solo componentes de ciclos oficiale
 resueltos desde el Corte 1. Confirmar su registro en `ops.schema_migrations`
 antes de reiniciar la API que consulta el gráfico.
 
+Para evitar planes de consulta costosos al cambiar o continuar un escenario,
+aplicar también `012_dashboard_planner_statistics.sql`. Actualiza las estadísticas
+del planificador y configura autoanalyze para las tablas pequeñas de escenarios
+y matrícula y para el crecimiento de ciclos/componentes. No cambia scores ni datos.
+
+```bash
+sudo docker compose exec -T postgres sh -lc \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < database/migrations/012_dashboard_planner_statistics.sql
+```
+
+En el incidente del 30 de septiembre, el plan estimaba tres filas frente a
+196.608 componentes reales. ANALYZE redujo la consulta de agregación observada
+de 3,35 s a 0,91 s. El leaderboard del corte usa ahora directamente los
+componentes restringidos, evitando agregar la vista general de otros periodos.
+El gráfico agrupa claves internas antes de unir nombres/versiones; sus consultas
+usan memoria acotada de 32 MB y evitan trabajadores paralelos en el VPS pequeño.
+Una caché de 20 segundos por cohorte agrupa peticiones simultáneas del gráfico
+y del corte. Se aplica después de autenticar; no almacena dashboard personal,
+sesiones, claves ni el observatorio privado. La visibilidad de nuevos scores puede
+retrasarse hasta 20 segundos.
+
 ## Ronda de práctica e importación de matrícula
 
 La ronda inicial no arranca el reloj ni materializa futuro sintético:

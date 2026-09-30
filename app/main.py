@@ -28,6 +28,7 @@ from app.portal import (
     rotate_api_key,
 )
 from app.settings import get_settings
+from app.dashboard_cache import DashboardCache
 from app.chart import accuracy_chart
 from app.cutoff import first_cutoff_board
 from app.drift_monitor import monitor as drift_monitor
@@ -43,6 +44,7 @@ async def lifespan(app: FastAPI):
     ):
         raise RuntimeError("PORTAL_IDENTITY_PEPPER must be configured outside development")
     app.state.starter = StarterStore.load(settings.starter_data_dir)
+    app.state.dashboard_cache = DashboardCache()
     app.state.pool = None
     if not settings.skip_db_startup:
         app.state.pool = await asyncpg.create_pool(
@@ -494,14 +496,19 @@ async def portal_rotate_api_key(
 
 @app.get("/v1/portal/accuracy-chart", tags=["portal"])
 async def portal_accuracy_chart(request: Request, identity: PortalIdentity = Depends(portal_participant)):
-    return await accuracy_chart(pool(request), identity)
+    return await request.app.state.dashboard_cache.get(
+        ("chart", identity.cohort_code), lambda: accuracy_chart(pool(request), identity)
+    )
 
 
 @app.get("/v1/portal/first-cutoff", tags=["portal"])
 async def portal_first_cutoff(
     request: Request, identity: PortalIdentity = Depends(portal_participant)
 ) -> dict[str, object]:
-    return await first_cutoff_board(pool(request), identity.cohort_code)
+    return await request.app.state.dashboard_cache.get(
+        ("cutoff", identity.cohort_code),
+        lambda: first_cutoff_board(pool(request), identity.cohort_code),
+    )
 
 
 @app.get("/v1/portal/leaderboard", tags=["portal"])
@@ -510,7 +517,10 @@ async def portal_leaderboard(
     identity: PortalIdentity = Depends(portal_participant),
 ) -> dict[str, object]:
     board = await cohort_board(pool(request), identity)
-    cutoff = await first_cutoff_board(pool(request), identity.cohort_code)
+    cutoff = await request.app.state.dashboard_cache.get(
+        ("cutoff", identity.cohort_code),
+        lambda: first_cutoff_board(pool(request), identity.cohort_code),
+    )
     scores = {row["participant_id"]: row for row in cutoff["data"]}
     for row in board["data"]:
         score = scores.get(row["participant_id"])

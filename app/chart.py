@@ -80,38 +80,42 @@ def build_chart(rows):
 
 
 async def accuracy_chart(pool, identity):
-    async with pool.acquire() as connection:
+    async with pool.acquire() as connection, connection.transaction(readonly=True):
+        # Bound query memory and avoid parallel sort/merge overhead on the small VPS.
+        await connection.execute("set local work_mem = '32MB'")
+        await connection.execute("set local max_parallel_workers_per_gather = 0")
         rows = await connection.fetch('''
-            with station_scores as materialized (
+            with eligible as materialized (
+                select p.id, p.public_id, ps.scenario_id
+                from competition.participants p
+                join competition.participant_scenarios ps on ps.participant_id=p.id
+                where p.cohort_code=$2 and p.kind='student' and p.eligible
+                  and ps.status='active'
+            ), station_scores as materialized (
                 select sc.scenario_id, sc.cycle_id as internal_cycle_id,
-                       sc.public_cycle_id as cycle_id, sc.closes_at,
-                       p.id as internal_participant_id,
-                       p.public_id as participant_id, sc.station_id,
+                       sc.participant_id as internal_participant_id, sc.station_id,
                        sum(sc.absolute_error) as error,
                        sum(sc.actual_value) as actual,
                        count(*) as targets,
                        count(*) filter (where not sc.was_missing) as delivered
                 from competition.accuracy_components_cutoff sc
-                join competition.participants p on p.id=sc.participant_id
-                join competition.participant_scenarios ps
-                  on ps.participant_id=p.id and ps.scenario_id=sc.scenario_id
+                join eligible e on e.id=sc.participant_id and e.scenario_id=sc.scenario_id
                 where sc.opens_at >= $1
-                  and p.cohort_code=$2 and p.kind='student' and p.eligible
-                  and ps.status='active'
-                group by sc.scenario_id,sc.cycle_id,sc.public_cycle_id,
-                         sc.closes_at,p.id,sc.station_id
+                group by sc.scenario_id,sc.cycle_id,sc.participant_id,sc.station_id
             )
-            select ss.scenario_id, ss.cycle_id, ss.closes_at,
-                   ss.participant_id, ss.station_id,
+            select ss.scenario_id, c.public_id as cycle_id, c.closes_at,
+                   e.public_id as participant_id, ss.station_id,
                    ss.error, ss.actual, ss.targets, ss.delivered,
                    case when sub.model_version is null then array[]::text[]
                         else array[sub.model_version] end as model_versions
             from station_scores ss
+            join competition.forecast_cycles c on c.id=ss.internal_cycle_id
+            join eligible e on e.id=ss.internal_participant_id and e.scenario_id=ss.scenario_id
             left join competition.cycle_entries ce
               on ce.cycle_id=ss.internal_cycle_id
              and ce.participant_id=ss.internal_participant_id
             left join competition.submissions sub on sub.id=ce.official_submission_id
-            order by ss.scenario_id, ss.closes_at
+            order by ss.scenario_id, c.closes_at
         ''', FIRST_CUTOFF_UTC, identity.cohort_code)
     chart = build_chart(rows)
     for stage in chart['stages']:
