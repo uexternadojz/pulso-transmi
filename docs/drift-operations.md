@@ -33,6 +33,26 @@ No restaurar un backup sobre nuevas submissions recibidas.
 
 El resto de este documento conserva el registro de la ventana anterior.
 
+### Registro de activación final
+
+Activada la revisión 4 el **3 de octubre de 2026 a las 17:49:05 Bogotá**.
+Frontera virtual: `2026-09-20T12:00:00Z`; primer ciclo:
+`cyc_official-20260921_20260920T120000Z`, con 48 targets y cierre de recepción
+a las 18:14:05 Bogotá. La primera publicación v2 corresponde al siguiente tick
+de 30 minutos; no se adelantan observaciones futuras.
+
+Bundle SHA-256:
+`e5c36670efc70c4526f1b6f7fc55e7a2ecb960441d60a6ed703ff56a1d0494e0`.
+La extensión privada cubre 36 horas virtuales y el cierre real está fijado en
+`2026-10-05T04:59:00Z`. Los últimos ciclos respetan el margen de drenaje.
+
+Verificación: 62 pruebas unitarias aprobadas, calibración causal de dos familias
+con fuente observable degradada y prueba sobre una copia aislada restaurada.
+La prueba confirmó hashes históricos idénticos, reapertura idempotente,
+publicación v2, scoring con verdad completa, permisos y cierre drenado.
+Tras desplegar, `/ready` respondió correctamente, el scheduler informó cero
+errores en 24 horas y el portal mostró revisión 4, nuevo cierre y enlace al contrato.
+
 La continuación utiliza el escenario vigente y conserva el corte del 25 de
 septiembre. El cierre real se fija para el 2 de octubre de 2026 a las 23:59
 America/Bogota. No se abre un ciclo si faltan menos de 65 minutos para ese cierre;
