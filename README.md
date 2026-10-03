@@ -28,8 +28,10 @@ individual; el repositorio no contiene correos ni documentos del curso.
 
 > **Fase de drift configurable — 0.8.0:** continuación versionada con niveles
 > de dificultad, protección de targets comprometidos y observatorio docente.
-> El cierre de la ventana se configura para el viernes 2 de octubre a las 23:59
-> Bogotá. El estado vigente y los ciclos disponibles se consultan en el portal.
+> **Fase final — 0.9.0:** reapertura hasta el domingo 4 de octubre a las 23:59
+> Bogotá, con observaciones v2, faltantes señalizados y un nuevo régimen de demanda.
+> Consulta el [nuevo contrato y requisitos](docs/fase-final.md).
+> El estado vigente y los ciclos disponibles se consultan en el portal.
 > [Guía para estudiantes](docs/fase-drift.md) ·
 > [Contrato técnico](docs/drift-control.md) · [Operación](docs/drift-operations.md).
 
@@ -102,7 +104,7 @@ Redis, Celery ni un broker en esta versión.
 | Componente | Responsabilidad | Estado |
 |---|---|---|
 | PostgreSQL 17 | Catálogo, simulación privada, competencia y auditoría | Operativo |
-| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.8.0`) |
+| FastAPI | Historia, stream, ciclos, autenticación, entregas y leaderboard | Pública (`0.9.0`) |
 | Portal web | Carrera de accuracy, benchmark completo, API key, rotación y recibos | Sesión estudiantil |
 | Scheduler | Reloj, publicación incremental, ciclos, scoring y snapshots horarios | Operativo |
 | Caddy | TLS y exposición pública del servicio | Operativo |

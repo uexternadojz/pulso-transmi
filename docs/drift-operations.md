@@ -1,5 +1,38 @@
 # Operación de la ventana de drift · 0.8.0
 
+## Fase final · 0.9.0
+
+La revisión 4 reabre el reloj completado hasta el **4 de octubre de 2026,
+23:59 America/Bogota**. La reapertura usa `operation: reopen` en el bundle,
+exige que todos los ciclos anteriores estén resueltos y permite extender el
+horizonte virtual para cubrir la ventana real. Reinicia `last_tick_at` y abre
+un único ciclo en la frontera protegida dentro de la misma transacción.
+No crea ciclos por el intervalo en que estuvo completado.
+
+Aplicar antes la migración `013_final_source_contract.sql`. La revisión puede
+registrar `observation_contract` con versión 2 y tasa de faltantes validada.
+El scheduler fija versión y calidad al publicar cada observación. La API
+serializa v1 o v2 por registro; los valores faltantes no se exponen en el JSON.
+El scoring sigue usando `sim.generated_truth`, completo e independiente.
+
+El observatorio docente delimita su fase por `effective_from` de la revisión
+actual. Compara con los seis ciclos anteriores; el acumulado del portal conserva
+el corte original. Durante los primeros seis ciclos no concluye cambios
+comparables ni interpreta el calentamiento como fallo.
+
+Antes de activar: backup, calibración causal con dos familias usando únicamente
+la fuente observable, suite unitaria y `tests/integration_reopen.py` en una copia
+aislada cuyo nombre termine en `_test`. Esa prueba verifica hashes del pasado,
+reapertura idempotente, publicación v2, scoring, permisos y drenaje final.
+El script nunca acepta la base configurada de producción como destino.
+
+Una vez publicadas observaciones v2, una corrección debe preservar su versión y
+calidad; no revertir la API a un binario que vuelva a exponer el campo plano.
+Pausar el reloj ante un fallo central y desplegar una corrección compatible.
+No restaurar un backup sobre nuevas submissions recibidas.
+
+El resto de este documento conserva el registro de la ventana anterior.
+
 La continuación utiliza el escenario vigente y conserva el corte del 25 de
 septiembre. El cierre real se fija para el 2 de octubre de 2026 a las 23:59
 America/Bogota. No se abre un ciclo si faltan menos de 65 minutos para ese cierre;

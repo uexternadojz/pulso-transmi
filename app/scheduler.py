@@ -43,12 +43,23 @@ async def release_observations(
     result = await connection.execute(
         f"""
         insert into competition.observations
-            (scenario_id, station_id, observed_at, value, released_at)
-        select scenario_id, station_id, observed_at, actual_value, now()
-        from sim.generated_truth
-        where scenario_id=$1
-          and observed_at {lower_operator} $2
-          and observed_at <= $3
+            (scenario_id, station_id, observed_at, value, released_at,
+             source_schema_version, source_quality)
+        select t.scenario_id, t.station_id, t.observed_at, t.actual_value, now(),
+               coalesce(p.schema_version,1),
+               case when p.schema_version=2 and
+                 (('x'||substr(md5(t.station_id||':'||to_char(t.observed_at at time zone 'UTC',
+                   'YYYY-MM-DD"T"HH24:MI:SS"Z"')),1,7))::bit(28)::integer % 10000)<p.missing_permyriad
+                 then 'missing' else 'observed' end
+        from sim.generated_truth t
+        left join lateral (
+          select schema_version,missing_permyriad from competition.source_contracts
+          where scenario_id=t.scenario_id and effective_from<t.observed_at
+          order by effective_from desc limit 1
+        ) p on true
+        where t.scenario_id=$1
+          and t.observed_at {lower_operator} $2
+          and t.observed_at <= $3
         on conflict (scenario_id,station_id,observed_at) do nothing
         """,
         scenario_id,

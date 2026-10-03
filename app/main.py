@@ -32,6 +32,7 @@ from app.dashboard_cache import DashboardCache
 from app.chart import accuracy_chart
 from app.cutoff import first_cutoff_board
 from app.drift_monitor import monitor as drift_monitor
+from app.source_contract import serialize_observation
 from app.starter_store import InvalidCursor, StarterStore
 
 
@@ -60,7 +61,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(
     title="Pulso TransMi API",
-    version="0.8.0",
+    version="0.9.0",
     description="API pública del reto MLOps Pulso TransMi.",
     lifespan=lifespan,
 )
@@ -303,7 +304,8 @@ async def stream_observations(
     async with pool(request).acquire() as connection:
         rows = await connection.fetch(
             """
-            select o.station_id,o.observed_at,o.value as demand,o.released_at
+            select o.station_id,o.observed_at,o.value as demand,o.released_at,
+                   o.source_schema_version,o.source_quality
             from competition.observations o
             join competition.scenario_clock c on c.scenario_id=o.scenario_id
             where c.state in ('running','completed')
@@ -327,7 +329,7 @@ async def stream_observations(
             last["released_at"], last["observed_at"], last["station_id"]
         )
     return {
-        "data": [dict(row) for row in page],
+        "data": [serialize_observation(row) for row in page],
         "count": len(page),
         "next_cursor": next_cursor,
         "server_time": datetime.now(timezone.utc),

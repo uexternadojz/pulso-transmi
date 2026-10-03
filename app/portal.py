@@ -314,7 +314,9 @@ async def rotate_api_key(
 async def dashboard(pool: asyncpg.Pool, identity: PortalIdentity) -> dict[str, object]:
     async with pool.acquire() as connection:
         kind = await connection.fetchval("select kind from competition.participants where id=$1", identity.participant_id)
-        drift = await connection.fetchrow("""select w.started_at,w.ends_at_wall,c.state
+        drift = await connection.fetchrow("""select w.started_at,w.ends_at_wall,c.state,
+            (select schema_version from competition.source_contracts p
+             where p.scenario_id=w.scenario_id order by p.effective_from desc limit 1) source_schema_version
             from competition.drift_windows w join competition.scenario_clock c on c.scenario_id=w.scenario_id
             order by w.started_at desc limit 1""")
         key = await connection.fetchrow(

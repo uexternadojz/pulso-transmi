@@ -4,6 +4,12 @@ Fecha de diseño: 28 de septiembre de 2026.
 
 ## Alcance y estado verificable
 
+Actualización 0.9.0: `operation: reopen` habilita una extensión explícita desde
+un reloj completado y sin ciclos pendientes. La revisión enlaza el hash anterior,
+conserva la frontera comprometida y puede ampliar el final virtual. El contrato
+de observaciones puede versionarse por registro mediante una política inmutable.
+Ver [fase final](fase-final.md) y [operación](drift-operations.md).
+
 Actualización 0.8.0: implementados validador de planes, importación transaccional
 por tramos, archivo inmutable de revisiones, frontera protegida, continuación,
 cierre real con drenaje y observatorio docente. El generador reconstruido y su

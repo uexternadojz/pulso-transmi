@@ -136,7 +136,17 @@ function renderDashboard(data) {
   const participant = data.participant;
   const notice = document.querySelector("#drift-phase-notice");
   notice.hidden = !data.drift_phase;
-  if (data.drift_phase) notice.textContent = `Fase de adaptación · ${data.drift_phase.state === "running" ? "Activa" : "Finalizada o en pausa"} · Cierre ${formatDate(data.drift_phase.ends_at_wall)} (Bogotá). El corte acumulado se conserva.`;
+  if (data.drift_phase) {
+    notice.textContent = `Fase de adaptación · ${data.drift_phase.state === "running" ? "Activa" : "Finalizada o en pausa"} · Cierre ${formatDate(data.drift_phase.ends_at_wall)} (Bogotá). El corte acumulado se conserva.`;
+    if (data.drift_phase.source_schema_version === 2) {
+      notice.append(" Fase final: las nuevas observaciones usan el contrato v2 y pueden tener valores faltantes señalizados. ");
+      const link = document.createElement("a");
+      link.href = "https://github.com/uexternadojz/pulso-transmi/blob/main/docs/fase-final.md";
+      link.textContent = "Consultar el nuevo contrato";
+      link.target = "_blank"; link.rel = "noopener noreferrer";
+      notice.append(link);
+    }
+  }
   document.querySelector("#drift-monitor").hidden = participant.kind !== "admin";
   currentParticipantId = participant.participant_id || participant.public_id || participant.id;
   const preferredName = participant.preferred_name || participant.display_name;

@@ -1,8 +1,9 @@
 # Fase de adaptación a cambios de demanda
 
 La continuación se habilita con dificultad controlada y conserva el corte vigente.
-El cierre está configurado para el viernes **2 de octubre de 2026 a las 23:59,
-hora de Bogotá**. La API determina los ciclos abiertos y su plazo individual;
+La fase final extiende el cierre al domingo **4 de octubre de 2026 a las 23:59,
+hora de Bogotá**, e introduce el [contrato de observación v2](fase-final.md).
+La API determina los ciclos abiertos y su plazo individual;
 los últimos se abren con tiempo suficiente para evaluarse antes del cierre.
 
 ## Objetivo académico

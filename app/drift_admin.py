@@ -33,6 +33,15 @@ def validate(bundle):
         raise ValueError('Invalid level')
     if type(bundle['revision']) is not int or bundle['revision']<1:
         raise ValueError('Invalid revision')
+    if bundle.get('operation', 'adjust') not in ('adjust', 'reopen'):
+        raise ValueError('Invalid operation')
+    contract = bundle.get('observation_contract')
+    if contract is not None and (not isinstance(contract, dict)
+            or set(contract) != {'version', 'missing_permyriad'}
+            or type(contract['version']) is not int or contract['version'] != 2
+            or type(contract['missing_permyriad']) is not int
+            or not 0 <= contract['missing_permyriad'] <= 1000):
+        raise ValueError('Invalid observation contract')
     start,end=timestamp(bundle['effective_from']),timestamp(bundle['ends_at'])
     if any(t.minute or t.second or t.microsecond for t in (start,end)):
         raise ValueError('Boundaries must align to a UTC hour')
@@ -74,6 +83,25 @@ def validate(bundle):
     return start,end,stations
 
 
+def validate_revision_transition(bundle, old, clock, start, end, wall_end, pending):
+    """Reopening is explicit and may extend the horizon only after draining."""
+    reopen = bundle.get('operation') == 'reopen'
+    if old:
+        if bundle['revision'] != old['revision']+1 or bundle['parent_sha256'] != old['bundle_sha256']:
+            raise ValueError('Revision chain mismatch')
+        if reopen:
+            if clock['state'] != 'completed' or pending or start != clock['virtual_now']:
+                raise ValueError('Reopening requires a completed, drained clock at the protected boundary')
+            if end < old['ends_at']:
+                raise ValueError('Reopening cannot shorten the virtual horizon')
+            if end-start < wall_end-clock['db_now']:
+                raise ValueError('Virtual horizon must cover the remaining wall window')
+        elif end != old['ends_at'] or clock['state'] != 'running':
+            raise ValueError('A level adjustment must preserve the virtual end and use a running clock')
+    elif reopen or bundle['revision'] != 1 or bundle['parent_sha256'] is not None or clock['state'] != 'completed':
+        raise ValueError('Initial continuation requires a completed clock and revision 1')
+
+
 async def apply(connection,bundle,wall_end,expected_clock):
     start,end,stations=validate(bundle)
     bundle_hash=digest(bundle)
@@ -96,18 +124,19 @@ async def apply(connection,bundle,wall_end,expected_clock):
         # No gaps: adjustments start at the next committed boundary; initial continuation at the exhausted clock.
         if start!=frontier: raise ValueError('Continuation must start exactly at the protected boundary')
         old=await connection.fetchrow('select * from sim.drift_revisions where scenario_id=$1 order by revision desc limit 1',sid)
-        if old:
-            if bundle['revision']!=old['revision']+1 or bundle['parent_sha256']!=old['bundle_sha256']:
-                raise ValueError('Revision chain mismatch')
-            if end!=old['ends_at']: raise ValueError('A level adjustment must preserve the virtual end')
-        elif bundle['revision']!=1 or bundle['parent_sha256'] is not None or clock['state']!='completed':
-            raise ValueError('Initial continuation requires a completed clock and revision 1')
+        pending = await connection.fetchval("select count(*) from competition.forecast_cycles where scenario_id=$1 and state in ('open','closed')", sid)
+        validate_revision_transition(bundle, old, clock, start, end, wall_end, pending)
         known=await connection.fetch('select station_id from sim.scenario_stations where scenario_id=$1 and is_benchmark',sid)
         if {r['station_id'] for r in known}!=stations: raise ValueError('Station set mismatch')
         # Existing future is preserved in the immutable revision artifact before any replacement.
         revision_id=await connection.fetchval('''insert into sim.drift_revisions
          (scenario_id,revision,parent_sha256,bundle_sha256,level,effective_from,ends_at,generator_version,reason,calibration,bundle)
          values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11::jsonb) returning id''',sid,bundle['revision'],bundle['parent_sha256'],bundle_hash,bundle['level'],start,end,bundle['generator_version'],bundle['reason'],json.dumps(bundle['calibration']),json.dumps(bundle))
+        if bundle.get('observation_contract') is not None:
+            contract = bundle['observation_contract']
+            await connection.execute('''insert into competition.source_contracts
+              (revision_id,scenario_id,effective_from,schema_version,missing_permyriad)
+              values($1,$2,$3,$4,$5)''', revision_id,sid,start,contract['version'],contract['missing_permyriad'])
         if old:
             await connection.execute('delete from sim.generated_truth where scenario_id=$1 and observed_at>$2',sid,start)
             await connection.execute('delete from sim.time_context where scenario_id=$1 and observed_at>$2',sid,start)
@@ -121,11 +150,11 @@ async def apply(connection,bundle,wall_end,expected_clock):
         await connection.execute('''insert into competition.drift_windows(scenario_id,starts_at_virtual,ends_at_wall,current_revision_id)
           values($1,$2,$3,$4) on conflict(scenario_id) do update set current_revision_id=excluded.current_revision_id,
           ends_at_wall=excluded.ends_at_wall''',sid,start,wall_end,revision_id)
-        if not old:
+        if not old or bundle.get('operation') == 'reopen':
             await connection.execute("update competition.scenario_clock set state='running',last_tick_at=now(),version=version+1 where scenario_id=$1",sid)
             from app.scheduler import open_cycle
             cycle=await open_cycle(connection,sid,bundle['scenario_code'],clock['virtual_now'],25,end)
-            if cycle is None: raise ValueError('Initial drift cycle could not open')
+            if cycle is None: raise ValueError('Initial or reopened drift cycle could not open')
         await connection.execute('''insert into ops.audit_events(actor_type,actor_id,action,entity_type,entity_id,metadata)
           values('admin','drift-admin','drift.activated','scenario',$1,$2::jsonb)''',bundle['scenario_code'],json.dumps({'revision_id':revision_id,'level':bundle['level'],'sha256':bundle_hash,'reason':bundle['reason']}))
     return {'status':'active','revision_id':revision_id,'level':bundle['level'],'sha256':bundle_hash,'ends_at_wall':wall_end.isoformat()}

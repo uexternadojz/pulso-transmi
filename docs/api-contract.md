@@ -1,4 +1,4 @@
-# Contrato de API `0.7.1`
+# Contrato de API `0.9.0`
 
 Este documento es el contrato técnico de la plataforma central. Los clientes
 deben descubrir el ciclo vigente en la API y nunca inferirlo a partir de la hora
@@ -11,6 +11,8 @@ Base pública: `https://pulso-transmi.72-60-245-2.sslip.io`
 - Fechas y horas: ISO 8601 con zona horaria.
 - IDs de estación: texto de cinco dígitos; no convertir a entero.
 - Demanda: números finitos, no negativos y menores o iguales a `100000`.
+  En el stream v2 se representa como texto decimal o faltante señalizado;
+  las predicciones enviadas siguen siendo números.
 - Respuestas dinámicas: `Cache-Control: no-store`.
 - Cada respuesta incluye `X-Request-ID`; debe guardarse al diagnosticar errores.
 - La API key va en `Authorization: Bearer $PULSO_API_KEY`, nunca en el JSON.
@@ -25,6 +27,11 @@ corte no cambia y no contiene futuro de competencia. La paginación usa un
 ## Stream incremental
 
 ### `GET /v1/stream/observations`
+
+**Fase final:** las observaciones posteriores a la frontera virtual
+`2026-09-20T12:00:00Z` usan el [contrato de observación v2](fase-final.md).
+El ejemplo siguiente describe v1, conservado para registros históricos.
+Una página puede combinar versiones. El cursor conserva su semántica.
 
 Entrega las observaciones liberadas por el reloj de competencia, en orden de
 liberación. Acepta `cursor` y `limit` (1–5000).
