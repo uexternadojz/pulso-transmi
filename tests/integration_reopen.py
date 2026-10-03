@@ -29,11 +29,11 @@ async def main(args):
         start = timestamp(b['effective_from'])
         sid = await c.fetchval('select id from sim.scenarios where code=$1',b['scenario_code'])
         async def fingerprints():
-            return tuple(await c.fetchval(query,sid,start) for query in (
+            return tuple([await c.fetchval(query,sid,start) for query in (
                 "select md5(string_agg(row(station_id,observed_at,value,released_at,source_schema_version,source_quality)::text,',' order by station_id,observed_at)) from competition.observations where scenario_id=$1 and observed_at<=$2",
                 "select md5(string_agg(row(station_id,observed_at,actual_value,expected_mean)::text,',' order by station_id,observed_at)) from sim.generated_truth where scenario_id=$1 and observed_at<=$2",
                 "select md5(string_agg(row(participant_id,cycle_id,station_id,target_at,actual_value,predicted_value,absolute_error)::text,',' order by participant_id,cycle_id,station_id,target_at)) from competition.score_components where scenario_id=$1 and target_at<=$2",
-            ))
+            )])
         before = await fingerprints()
         wall = datetime.now(timezone.utc)+timedelta(hours=28)
         result = await apply(c,b,wall,start)
