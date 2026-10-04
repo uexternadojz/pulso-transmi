@@ -79,7 +79,32 @@ def build_chart(rows):
     return {'stages': result}
 
 
-async def accuracy_chart(pool, identity):
+def compact_chart(chart):
+    """Deduplicate tooltip metadata on the wire; preserve every cycle and score."""
+    packed = {**chart, 'format': 'compact-v1', 'stages': []}
+    for stage in chart['stages']:
+        participants = sorted({p['participant_id'] for p in stage['cumulative']})
+        participant_index = {p: i for i, p in enumerate(participants)}
+        versions = []
+        version_index = {}
+        output = {**stage, 'participants': participants, 'version_sets': versions}
+        for mode in ('cumulative', 'rolling6'):
+            output[mode] = []
+            for point in stage[mode]:
+                key = tuple(point['model_versions'])
+                if key not in version_index:
+                    version_index[key] = len(versions)
+                    versions.append(list(key))
+                output[mode].append([
+                    participant_index[point['participant_id']], point['index'],
+                    point['accuracy'], point['coverage'], point['delivered_cycles'],
+                    point['window_cycles'], version_index[key],
+                ])
+        packed['stages'].append(output)
+    return packed
+
+
+async def accuracy_chart(pool, identity, compact=False):
     async with pool.acquire() as connection, connection.transaction(readonly=True):
         # Bound query memory and avoid parallel sort/merge overhead on the small VPS.
         await connection.execute("set local work_mem = '32MB'")
@@ -121,4 +146,4 @@ async def accuracy_chart(pool, identity):
     for stage in chart['stages']:
         stage['label'] = 'Corte 1'
     chart['starts_at'] = FIRST_CUTOFF_UTC
-    return chart
+    return compact_chart(chart) if compact else chart

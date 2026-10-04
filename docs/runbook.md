@@ -253,3 +253,18 @@ tras el cierre no se inserta retroactivamente.
 No usar `docker compose down -v`. Ante una falla de API, PostgreSQL puede seguir
 operando y el reloj permanece pausado. El avance del reloj debe usar advisory
 locks y transacciones cortas.
+
+### Trayectoria del portal: transporte compacto (4 de octubre de 2026)
+
+El frontend solicita `/v1/portal/accuracy-chart?format=compact`. La respuesta
+`compact-v1` comparte IDs de participantes, ciclos y conjuntos de versiones;
+conserva todos los puntos, precisión de las métricas y detalles de cada ventana.
+El formato completo sigue disponible sin el parámetro. El navegador expande los
+puntos antes de dibujar. Las cargas anteriores no pueden sobrescribir una carga
+más reciente; un fallo de transporte se reintenta una vez. Los controles de
+ventana se conectan incluso si la petición falla.
+
+Se observó un fallo intermitente que desapareció al recargar, sin error HTTP
+reproducible en esa recarga. La respuesta completa medía 5,3 MB. La optimización
+reduce trabajo de serialización, transferencia y parseo; no implica que se haya
+confirmado la causa de todas las interrupciones de red anteriores.

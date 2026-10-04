@@ -1,4 +1,18 @@
-let accuracyData, accuracyBoard, accuracyLoadError = false, scoreMode = 'cumulative', scoreSelection = '';
+let accuracyData, accuracyBoard, accuracyLoadError = false, scoreMode = 'cumulative', scoreSelection = '', accuracyRequest = 0;
+
+function expandAccuracy(data) {
+  if (data.format !== 'compact-v1') return data;
+  return {...data, stages: data.stages.map(stage => {
+    const result = {...stage};
+    for (const mode of ['cumulative', 'rolling6']) result[mode] = stage[mode].map(p => ({
+      participant_id: stage.participants[p[0]], index: p[1],
+      cycle_id: stage.cycles[p[1]].id, at: stage.cycles[p[1]].at,
+      accuracy: p[2], coverage: p[3], delivered_cycles: p[4],
+      window_cycles: p[5], model_versions: stage.version_sets[p[6]],
+    }));
+    return result;
+  })};
+}
 
 function drawAccuracy() {
   const stage = accuracyData?.stages?.at(-1);
@@ -84,17 +98,25 @@ function drawAccuracy() {
 }
 
 async function loadAccuracy(board){
+  const request = ++accuracyRequest;
   accuracyBoard=board;
   accuracyData=null;
   accuracyLoadError=false;
   drawAccuracy();
+  document.querySelectorAll('[data-score-mode]').forEach(b=>b.onclick=()=>{scoreMode=b.dataset.scoreMode;drawAccuracy();});
   setText('#accuracy-detail','Cargando trayectorias…');
   try {
-    accuracyData=await api('/v1/portal/accuracy-chart');
-    document.querySelectorAll('[data-score-mode]').forEach(b=>b.onclick=()=>{scoreMode=b.dataset.scoreMode;drawAccuracy();});
+    let data;
+    try { data=await api('/v1/portal/accuracy-chart?format=compact'); }
+    catch(error) {
+      if (error.status || request !== accuracyRequest) throw error;
+      data=await api('/v1/portal/accuracy-chart?format=compact');
+    }
+    if (request !== accuracyRequest) return;
+    accuracyData=expandAccuracy(data);
     drawAccuracy();
     setText('#accuracy-detail',accuracyData.stages.length
       ? 'Selecciona un estudiante o un punto para explorar los resultados.'
       : 'Esperando ciclos evaluados desde el inicio del corte.');
-  } catch(error){console.error("Accuracy trajectory:", error);accuracyLoadError=true;drawAccuracy();setText('#accuracy-detail','No se pudo cargar la trayectoria. La clasificación sigue disponible; usa Actualizar datos para reintentar.');}
+  } catch(error){if (request !== accuracyRequest) return;console.error("Accuracy trajectory:", error);accuracyLoadError=true;drawAccuracy();setText('#accuracy-detail','No se pudo cargar la trayectoria. La clasificación sigue disponible; usa Actualizar datos para reintentar.');}
 }

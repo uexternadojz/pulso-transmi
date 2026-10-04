@@ -497,9 +497,11 @@ async def portal_rotate_api_key(
 
 
 @app.get("/v1/portal/accuracy-chart", tags=["portal"])
-async def portal_accuracy_chart(request: Request, identity: PortalIdentity = Depends(portal_participant)):
+async def portal_accuracy_chart(request: Request, identity: PortalIdentity = Depends(portal_participant),
+                               format: Literal['full', 'compact'] = 'full'):
     return await request.app.state.dashboard_cache.get(
-        ("chart", identity.cohort_code), lambda: accuracy_chart(pool(request), identity)
+        ("chart", identity.cohort_code, format),
+        lambda: accuracy_chart(pool(request), identity, compact=format == 'compact')
     )
 
 

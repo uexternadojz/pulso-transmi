@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from app.chart import build_chart
+from app.chart import build_chart, compact_chart
 from app.cutoff import FIRST_CUTOFF_UTC
 
 
@@ -71,3 +71,23 @@ def test_rolling_window_drops_old_scores_and_model_versions():
     assert rolling['window_cycles'] == 6
     assert rolling['delivered_cycles'] == 6
     assert rolling['model_versions'] == ['new']
+
+
+def test_compact_payload_preserves_scores_cycles_and_tooltips():
+    first = datetime(2026, 9, 25, tzinfo=timezone.utc)
+    rows = [dict(scenario_id=1, cycle_id=f'c{i}', closes_at=first+timedelta(hours=i),
+                 participant_id=person, station_id='a', error=i, actual=100,
+                 targets=4, delivered=4 if person == 'sent' else 0,
+                 model_versions=[f'v{i}'] if person == 'sent' else [])
+            for i in range(8) for person in ['sent', 'absent']]
+    chart = build_chart(rows)
+    packed = compact_chart(chart)
+    stage = packed['stages'][0]
+    for mode in ('cumulative', 'rolling6'):
+        decoded = [dict(participant_id=stage['participants'][p[0]], index=p[1],
+                        cycle_id=stage['cycles'][p[1]]['id'], at=stage['cycles'][p[1]]['at'],
+                        accuracy=p[2], coverage=p[3], delivered_cycles=p[4],
+                        window_cycles=p[5], model_versions=stage['version_sets'][p[6]])
+                   for p in stage[mode]]
+        assert decoded == chart['stages'][0][mode]
+    assert compact_chart({'stages': []})['stages'] == []
