@@ -109,6 +109,10 @@ async def accuracy_chart(pool, identity, compact=False):
         # Bound query memory and avoid parallel sort/merge overhead on the small VPS.
         await connection.execute("set local work_mem = '32MB'")
         await connection.execute("set local max_parallel_workers_per_gather = 0")
+        # The materialized aggregate's join estimate is ~63 rows vs 74k actual.
+        # Hash joins avoid 3 index lookups per station row (over 200k probes).
+        # Scope the planner choice to this read-only chart transaction.
+        await connection.execute("set local enable_nestloop = off")
         rows = await connection.fetch('''
             with eligible as materialized (
                 select p.id, p.public_id, ps.scenario_id

@@ -268,3 +268,11 @@ Se observó un fallo intermitente que desapareció al recargar, sin error HTTP
 reproducible en esa recarga. La respuesta completa medía 5,3 MB. La optimización
 reduce trabajo de serialización, transferencia y parseo; no implica que se haya
 confirmado la causa de todas las interrupciones de red anteriores.
+
+La reproducción posterior devolvió HTTP 500. El plan de la consulta estimaba
+63 filas en los joins posteriores a la agregación, frente a 74.496 reales:
+realizaba más de 200.000 búsquedas de índices. La transacción de lectura del
+gráfico deshabilita nested loops localmente para utilizar hash joins; en el VPS
+la lectura completa de filas se midió en 1,98 s con ese plan. Este ajuste no
+altera el planner de submissions, scoring ni otras consultas. El transporte
+compacto redujo la respuesta de 5.377.722 a 1.318.199 bytes (75,5 %).
