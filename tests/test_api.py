@@ -109,3 +109,13 @@ def test_context_and_download() -> None:
     assert download.status_code == 200
     assert download.headers["content-type"].startswith("text/csv")
     assert "sha256:" in download.headers["etag"]
+
+
+@pytest.mark.parametrize("path", ["/", "/assets/app.js", "/v1/downloads/stations.csv"])
+def test_file_responses_preserve_full_body_and_security_headers(path):
+    with TestClient(app) as client:
+        response = client.get(path)
+    assert response.status_code == 200
+    assert len(response.content) == int(response.headers["content-length"])
+    assert response.headers["x-content-type-options"] == "nosniff"
+    assert response.headers["x-request-id"]

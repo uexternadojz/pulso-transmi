@@ -43,7 +43,7 @@ Versión `performance-v1-20261006`: 32 registros, 28 notas escaladas de 2,00 a
 entregas, cobertura, acumulado y últimos seis ciclos finales. No se escribieron
 notas oficiales en el LMS de Academy.
 
-Verificación: 68 pruebas automatizadas; consulta HTTP con las 32 sesiones de
+Verificación: 71 pruebas automatizadas; consulta HTTP con las 32 sesiones de
 estudiantes; intento de consultar otro participante mediante query string;
 respuesta privada con `no-store`; RLS sin filtro de sesión devuelve cero filas,
 y con identidad establecida devuelve una sola fila propia. Las sesiones de QA
