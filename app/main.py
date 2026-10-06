@@ -31,6 +31,7 @@ from app.settings import get_settings
 from app.dashboard_cache import DashboardCache
 from app.chart import accuracy_chart
 from app.cutoff import first_cutoff_board
+from app.grades import own_grade
 from app.drift_monitor import monitor as drift_monitor
 from app.source_contract import serialize_observation
 from app.starter_store import InvalidCursor, StarterStore
@@ -145,6 +146,8 @@ async def participant(
 async def portal_participant(
     request: Request, ptm_session: str | None = Cookie(default=None)
 ) -> PortalIdentity:
+    if not ptm_session:
+        raise HTTPException(status_code=401, detail={"code": "portal_session_required", "message": "Inicia sesión."})
     return await authenticate_session(pool(request), ptm_session)
 
 
@@ -650,3 +653,8 @@ app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="portal-assets")
 @app.get("/v1/portal/drift-monitor", include_in_schema=False)
 async def portal_drift_monitor(request: Request, identity: PortalIdentity = Depends(portal_participant)):
     return await drift_monitor(pool(request), identity)
+
+
+@app.get("/v1/portal/grade", tags=["portal"])
+async def personal_grade(request: Request, identity: PortalIdentity = Depends(portal_participant)):
+    return jsonable(await own_grade(pool(request), identity))

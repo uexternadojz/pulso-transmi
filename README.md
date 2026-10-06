@@ -43,6 +43,13 @@ individual; el repositorio no contiene correos ni documentos del curso.
 > [Guía para estudiantes](docs/fase-drift.md) ·
 > [Contrato técnico](docs/drift-control.md) · [Operación](docs/drift-operations.md).
 
+## Calificación individual
+
+El módulo **Calificación** muestra únicamente el resultado del estudiante
+autenticado, con evidencia de accuracy, continuidad y fase final. La consulta
+requiere sesión y no publica listas de notas.
+[Criterio y privacidad](docs/calificacion-privada.md).
+
 ## Qué se aprende
 
 El objetivo no es obtener una buena predicción una sola vez. Cada estudiante debe

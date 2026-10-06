@@ -16,6 +16,7 @@ const RUNNER_COLORS = [
   "#397e68", "#536f90", "#9a6e36", "#6d5594", "#bf5650", "#63824a",
 ];
 
+let gradeRequestSerial = 0;
 let latestKey = null;
 let currentParticipantId = null;
 
@@ -30,6 +31,7 @@ function showLoading(message = "Estamos comprobando tu sesión y reuniendo los r
 }
 
 function showLogin() {
+  clearGrade();
   loadingView.hidden = true;
   dashboardView.hidden = true;
   loginView.hidden = false;
@@ -545,7 +547,7 @@ function renderRaceListItem(runner) {
 }
 
 function activateModule(moduleName, updateHash = true) {
-  const valid = ["home", "api", "connection"];
+  const valid = ["home", "api", "connection", "grade"];
   const selected = valid.includes(moduleName) ? moduleName : "home";
   document.querySelectorAll("[data-module]").forEach((module) => {
     const active = module.dataset.module === selected;
@@ -558,6 +560,7 @@ function activateModule(moduleName, updateHash = true) {
     if (active) button.setAttribute("aria-current", "page");
     else button.removeAttribute("aria-current");
   });
+  if (selected === "grade") void loadGrade();
   if (updateHash) {
     if (window.location.hash !== `#${selected}`) history.replaceState(null, "", `#${selected}`);
     const resetScroll = () => {
@@ -810,6 +813,7 @@ document.querySelector("#logout-button").addEventListener("click", async () => {
   if (DEMO_MODE) return showMessage("Vista de propuesta: abre la URL sin ?demo=1 para volver al acceso real.");
   await api("/v1/portal/logout", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
   latestKey = null;
+  clearGrade();
   showLogin();
   document.querySelector("#secret-panel").hidden = true;
 });
@@ -867,3 +871,42 @@ async function loadDriftMonitor() {
     }
   } catch (error) { setText("#drift-summary", "No se pudo consultar el observatorio. Reintenta con Actualizar datos."); }
 }
+
+function clearGrade() {
+  gradeRequestSerial += 1;
+  ["#grade-value", "#grade-student", "#grade-summary", "#grade-method"].forEach(selector => setText(selector, ""));
+  document.querySelector("#grade-metrics").replaceChildren();
+  document.querySelector("#grade-reasons").replaceChildren();
+}
+async function loadGrade() {
+  clearGrade();
+  const serial = gradeRequestSerial;
+  setText("#grade-status", "Consultando tu resultado…");
+  try {
+    if (DEMO_MODE) throw new Error("Las calificaciones se consultan únicamente con una sesión real.");
+    const result = await api("/v1/portal/grade");
+    if (serial !== gradeRequestSerial || dashboardView.hidden) return;
+    setText("#grade-status", result.status === "published" ? "Calificación publicada" : result.status === "unavailable" ? "Cuenta sin calificación individual" : "Pendiente de revisión");
+    setText("#grade-value", result.grade == null ? "—" : Number(result.grade).toLocaleString("es-CO", {minimumFractionDigits:2, maximumFractionDigits:2}));
+    document.querySelector("#grade-scale").hidden = result.grade == null;
+    setText("#grade-student", result.student_name || "");
+    const feedback = result.feedback || {};
+    setText("#grade-summary", feedback.summary || result.message);
+    setText("#grade-method", feedback.method || "");
+    (feedback.reasons || []).forEach(reason => {
+      const li = document.createElement("li"); li.textContent = reason;
+      document.querySelector("#grade-reasons").append(li);
+    });
+    Object.entries(feedback.metrics || {}).forEach(([label, value]) => {
+      const div = document.createElement("div"), dt = document.createElement("dt"), dd = document.createElement("dd");
+      dt.textContent = label; dd.textContent = value; div.append(dt, dd);
+      document.querySelector("#grade-metrics").append(div);
+    });
+  } catch (error) {
+    if (serial !== gradeRequestSerial) return;
+    setText("#grade-status", "No se pudo consultar la calificación");
+    setText("#grade-summary", error.message);
+    document.querySelector("#grade-scale").hidden = true;
+  }
+}
+document.querySelector("#grade-retry").addEventListener("click", () => void loadGrade());

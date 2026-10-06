@@ -657,3 +657,11 @@ footer a { color: white; }
 .drift-table-scroll { overflow-x: auto; }
 .drift-monitor table { width: 100%; border-collapse: collapse; font-size: .9rem; }
 .drift-monitor td, .drift-monitor th { text-align: left; padding: .6rem; border-bottom: 1px solid #e2e7e1; white-space: nowrap; }
+
+.grade-card { background: #fff; border: 1px solid var(--line, #ccd6cf); padding: clamp(20px, 4vw, 40px); max-width: 850px; }
+.grade-score { display: flex; align-items: baseline; gap: 12px; color: #123725; margin: 20px 0; }
+.grade-score strong { font-size: clamp(48px, 8vw, 80px); line-height: 1; }
+.grade-score span { font-size: 22px; }
+#grade-reasons { padding-left: 22px; line-height: 1.65; }
+#grade-reasons li { margin-bottom: 12px; }
+#grade-summary { font-size: 18px; line-height: 1.6; }
