@@ -277,15 +277,16 @@ la lectura completa de filas se midió en 1,98 s con ese plan. Este ajuste no
 altera el planner de submissions, scoring ni otras consultas. El transporte
 compacto redujo la respuesta de 5.377.722 a 1.318.199 bytes (75,5 %).
 
-### Respuestas de archivos incompletas — 6 de octubre de 2026
+### Permisos del HTML en la imagen — 6 de octubre de 2026
 
-Durante la comprobación del módulo de calificación, GET `/` anunció su
-`Content-Length` pero entregó un cuerpo vacío. Uvicorn registró
-`Response content shorter than Content-Length`, y Caddy notificó
-`unexpected EOF` / `ERR_HTTP2_PROTOCOL_ERROR`. El transporte de la respuesta
-pasaba por `BaseHTTPMiddleware`.
+GET `/` anunció `Content-Length` pero no pudo entregar el cuerpo: Caddy reportó
+`unexpected EOF` y HTTP/2 falló. El middleware inicialmente ocultó la causa tras
+`Response content shorter than Content-Length`. Al inspeccionar el archivo con
+el usuario real del contenedor se confirmó `PermissionError` para `index.html`.
+El checkout realizado con umask restrictivo había dejado el archivo ilegible
+para el usuario `app` al copiarlo en la imagen.
 
-Se reemplazó el middleware de headers por uno ASGI que reenvía directamente
-los mensajes del cuerpo, preservando los guards, headers de seguridad y bloqueo
-de submissions. La regresión comprueba tamaño completo de HTML, JS y descarga
-CSV. Se verifica además la respuesta pública mediante HTTP/2 y el portal real.
+Docker copia ahora código y starter con `--chown=app:app`, conservando al usuario
+sin privilegios. Se mantiene el middleware original; la hipótesis inicial sobre
+su transporte se descartó. La regresión comprueba cuerpo completo de HTML, JS
+y CSV, junto con lectura bajo el usuario real de la imagen y HTTP/2 público.

@@ -13,7 +13,6 @@ from fastapi import Cookie, Depends, FastAPI, Header, HTTPException, Query, Requ
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from starlette.datastructures import MutableHeaders
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.competition import ParticipantIdentity, authenticate, current_receipt, receipt, submit
@@ -81,61 +80,55 @@ portal_identity_windows: dict[str, deque[datetime]] = defaultdict(deque)
 STATIC_DIR = Path(__file__).with_name("static")
 
 
-class PublicHeadersMiddleware:
-    """Apply public guards without buffering or cancelling streamed file responses."""
-    def __init__(self, app):
-        self.app = app
-
-    async def __call__(self, scope, receive, send):
-        if scope["type"] != "http":
-            return await self.app(scope, receive, send)
-        request = Request(scope)
-        request.state.request_id = request.headers.get("X-Request-ID") or f"req_{uuid.uuid4().hex}"
-
-        async def send_with_headers(message):
-            if message["type"] == "http.response.start":
-                headers = MutableHeaders(scope=message)
-                headers["X-Request-ID"] = request.state.request_id
-                headers["X-Content-Type-Options"] = "nosniff"
-                if request.url.path in {"/v1/meta", "/v1/stations"} or request.url.path.startswith("/v1/downloads/"):
-                    headers["Cache-Control"] = "public, max-age=300"
-                elif request.url.path.startswith("/assets/"):
-                    headers["Cache-Control"] = "public, max-age=3600"
-                elif request.url.path.startswith("/v1/"):
-                    headers["Cache-Control"] = "no-store"
-                elif request.url.path == "/":
-                    headers["Cache-Control"] = "no-store"
-                    headers["Content-Security-Policy"] = (
-                        "default-src 'self'; style-src 'self'; script-src 'self'; "
-                        "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; "
-                        "base-uri 'none'; form-action 'self'"
-                    )
-            await send(message)
-
-        async def reject(status, code, message):
-            response = JSONResponse(status_code=status, content={"error": {
-                "code": code, "message": message, "request_id": request.state.request_id,
-            }})
-            await response(scope, receive, send_with_headers)
-
-        if request.method == "POST" and request.url.path.rstrip("/") == "/v1/submissions" and not get_settings().submissions_enabled:
-            return await reject(410, "competition_closed", "La competencia terminó. Ya no se reciben submissions; los resultados y recibos siguen disponibles.")
-        if request.method == "POST" and (request.url.path.rstrip("/") == "/v1/submissions" or request.url.path.startswith("/v1/portal/")):
-            content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
-            if content_type != "application/json":
-                return await reject(415, "unsupported_media_type", "Content-Type must be application/json")
-            content_length = request.headers.get("content-length")
-            if content_length:
-                try:
-                    too_large = int(content_length) > get_settings().submission_max_bytes
-                except ValueError:
-                    return await reject(400, "invalid_content_length", "Content-Length must be an integer")
-                if too_large:
-                    return await reject(413, "payload_too_large", "Submission payload exceeds the configured limit")
-        await self.app(scope, receive, send_with_headers)
-
-
-app.add_middleware(PublicHeadersMiddleware)
+@app.middleware("http")
+async def public_headers(request: Request, call_next):
+    request.state.request_id = request.headers.get("X-Request-ID") or f"req_{uuid.uuid4().hex}"
+    if (
+        request.method == "POST"
+        and request.url.path.rstrip("/") == "/v1/submissions"
+        and not get_settings().submissions_enabled
+    ):
+        return JSONResponse(
+            status_code=410,
+            content={"error": {
+                "code": "competition_closed",
+                "message": "La competencia terminó. Ya no se reciben submissions; los resultados y recibos siguen disponibles.",
+                "request_id": request.state.request_id,
+            }},
+            headers={"X-Request-ID": request.state.request_id, "Cache-Control": "no-store"},
+        )
+    if request.method == "POST" and (
+        request.url.path == "/v1/submissions"
+        or request.url.path.startswith("/v1/portal/")
+    ):
+        content_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+        if content_type != "application/json":
+            return JSONResponse(status_code=415, content={"error": {"code": "unsupported_media_type", "message": "Content-Type must be application/json", "request_id": request.state.request_id}})
+        content_length = request.headers.get("content-length")
+        if content_length:
+            try:
+                too_large = int(content_length) > get_settings().submission_max_bytes
+            except ValueError:
+                return JSONResponse(status_code=400, content={"error": {"code": "invalid_content_length", "message": "Content-Length must be an integer", "request_id": request.state.request_id}})
+            if too_large:
+                return JSONResponse(status_code=413, content={"error": {"code": "payload_too_large", "message": "Submission payload exceeds the configured limit", "request_id": request.state.request_id}})
+    response: Response = await call_next(request)
+    response.headers["X-Request-ID"] = request.state.request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    if request.url.path in {"/v1/meta", "/v1/stations"} or request.url.path.startswith("/v1/downloads/"):
+        response.headers["Cache-Control"] = "public, max-age=300"
+    elif request.url.path.startswith("/assets/"):
+        response.headers["Cache-Control"] = "public, max-age=3600"
+    elif request.url.path.startswith("/v1/"):
+        response.headers["Cache-Control"] = "no-store"
+    elif request.url.path == "/":
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; style-src 'self'; script-src 'self'; "
+            "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; "
+            "base-uri 'none'; form-action 'self'"
+        )
+    return response
 
 
 def pool(request: Request) -> asyncpg.Pool:

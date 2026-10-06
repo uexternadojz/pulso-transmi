@@ -11,8 +11,8 @@ RUN groupadd --system app && useradd --system --gid app --home-dir /app app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY app ./app
-COPY data/starter ./data/starter
+COPY --chown=app:app app ./app
+COPY --chown=app:app data/starter ./data/starter
 
 USER app
 
