@@ -689,6 +689,10 @@ async function loadDashboard({ includeAccuracy = true } = {}) {
   renderBoard(payload.board);
   if (payload.board.mode === "operations") renderOperationsBoard(payload.board);
   else renderRace(payload.board);
+  if (payload.dashboard.drift_phase?.state === "completed") {
+    setText("#phase-status-label", "Competencia cerrada");
+    setText("#home-title", `${payload.board.operations?.active_participants ?? 0} de ${payload.board.count} modelos participaron.`);
+  }
   loginView.hidden = true;
   loadingView.hidden = true;
   dashboardView.hidden = false;

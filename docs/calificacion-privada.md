@@ -35,3 +35,20 @@ mediante el perfil ops. Cada publicación tiene versión, hash del snapshot y
 registro de auditoría. El importador rechaza reemplazar una versión existente.
 Una corrección se publica como nueva versión. El bundle, nombres, mensajes y
 notas permanecen fuera del Git público.
+
+## Publicación verificada — 6 de octubre de 2026
+
+Versión `performance-v1-20261006`: 32 registros, 28 notas escaladas de 2,00 a
+5,00 y cuatro ceros por no presentar. Cada explicación fue revisada con sus
+entregas, cobertura, acumulado y últimos seis ciclos finales. No se escribieron
+notas oficiales en el LMS de Academy.
+
+Verificación: 68 pruebas automatizadas; consulta HTTP con las 32 sesiones de
+estudiantes; intento de consultar otro participante mediante query string;
+respuesta privada con `no-store`; RLS sin filtro de sesión devuelve cero filas,
+y con identidad establecida devuelve una sola fila propia. Las sesiones de QA
+se revocaron al terminar. Los conteos del cierre permanecen en 6.837 submissions
+y 327.492 predicciones. La cuenta docente no recibe notas ajenas en este módulo.
+
+El bundle y la revisión individual del docente se conservan en el directorio
+privado `grading-performance-v1-20261006`, fuera del repositorio público.
