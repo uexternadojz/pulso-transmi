@@ -44,3 +44,24 @@ propietarios y grants para una recuperación completa con roles provisionados.
 Nunca restaurar sobre la base operativa para probar el respaldo.
 
 La conversión a notas y su peso siguen pendientes de definición docente.
+
+## Versión de cierre verificada
+
+Archivo `closeout-20261006T002135Z`, creado el 5 de octubre a las 19:21 Bogotá,
+con código `47bbc95`. Conserva 302 ciclos históricos, 215 ciclos resueltos desde
+el corte académico, 6.837 submissions, 327.492 predicciones, 6.127 entradas
+oficiales y 14.460 observaciones de competencia. La fase final conserva sus
+30 ciclos resueltos. Los datos del starter se archivan por separado.
+
+La restauración completa en una base temporal terminó correctamente; los
+conteos de las seis tablas exportadas coinciden con el manifiesto. La base
+temporal se eliminó después de la comprobación. La evidencia privada está en
+`RESTORE-VERIFIED.txt` y `restoration-counts.json`.
+
+Ubicaciones privadas:
+
+- VPS: `/opt/pulso-transmi/private/archives/closeout-20261006T002135Z/`.
+- Copia fuera del VPS: `~/.local/state/pulso-transmi/archives/closeout-20261006T002135Z/`.
+
+El bloqueo fue verificado tanto por localhost como por la URL pública: `410`.
+API y PostgreSQL permanecen saludables; scheduler detenido explícitamente.
