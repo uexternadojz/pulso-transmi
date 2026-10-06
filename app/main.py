@@ -82,6 +82,20 @@ STATIC_DIR = Path(__file__).with_name("static")
 @app.middleware("http")
 async def public_headers(request: Request, call_next):
     request.state.request_id = request.headers.get("X-Request-ID") or f"req_{uuid.uuid4().hex}"
+    if (
+        request.method == "POST"
+        and request.url.path.rstrip("/") == "/v1/submissions"
+        and not get_settings().submissions_enabled
+    ):
+        return JSONResponse(
+            status_code=410,
+            content={"error": {
+                "code": "competition_closed",
+                "message": "La competencia terminó. Ya no se reciben submissions; los resultados y recibos siguen disponibles.",
+                "request_id": request.state.request_id,
+            }},
+            headers={"X-Request-ID": request.state.request_id, "Cache-Control": "no-store"},
+        )
     if request.method == "POST" and (
         request.url.path == "/v1/submissions"
         or request.url.path.startswith("/v1/portal/")

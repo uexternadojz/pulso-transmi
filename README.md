@@ -1,5 +1,13 @@
 # Pulso TransMi
 
+> **Competencia cerrada — 4 de octubre de 2026, 23:59 Bogotá.**
+> Las entregas están deshabilitadas mediante `SUBMISSIONS_ENABLED=false`:
+> `POST /v1/submissions` responde `410 competition_closed`. El portal,
+> los datos publicados, rankings y recibos continúan disponibles para revisión.
+> El scheduler queda detenido después de resolver todos los ciclos admitidos.
+> El cierre conserva una versión privada de datos y resultados; ver
+> [procedimiento de archivo](docs/cierre-proyecto.md).
+
 Plataforma central del primer proyecto de MLOps de Orbital Academy. El reto simula
 la demanda de pasajeros en estaciones reales de TransMilenio: los estudiantes
 consumen observaciones que aparecen con el tiempo, entrenan y reentrenan modelos,

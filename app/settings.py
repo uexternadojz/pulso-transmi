@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     skip_db_startup: bool = False
     starter_data_dir: Path = Path("data/starter")
     submission_max_bytes: int = 65_536
+    submissions_enabled: bool = True
     submission_max_attempts: int = 3
     submission_rate_limit_per_minute: int = 10
     release_interval_minutes: int = 30

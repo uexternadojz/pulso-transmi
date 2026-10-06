@@ -9,6 +9,23 @@ import pytest
 
 from app.competition import ParticipantIdentity
 from app.main import app, current_submission_receipt
+from app.settings import get_settings
+
+
+@pytest.mark.parametrize("path", ["/v1/submissions", "/v1/submissions/"])
+def test_closed_competition_blocks_submissions_before_auth_or_body_validation(monkeypatch, path):
+    monkeypatch.setenv("SUBMISSIONS_ENABLED", "false")
+    get_settings.cache_clear()
+    try:
+        with TestClient(app) as client:
+            response = client.post(path, content="invalid body")
+            assert response.status_code == 410
+            assert response.json()["error"]["code"] == "competition_closed"
+            assert response.headers["X-Request-ID"]
+            assert client.get("/health").status_code == 200
+            assert client.get("/v1/observations", params={"limit": 1}).status_code == 200
+    finally:
+        get_settings.cache_clear()
 
 
 def test_health() -> None:
